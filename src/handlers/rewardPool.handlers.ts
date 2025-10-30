@@ -12,9 +12,8 @@ import { type ChainId, toChainId } from '../lib/chain';
 RewardPool.Initialized.handler(async ({ event, context }) => {
     const chainId = toChainId(event.chainId);
     const rewardPoolAddress = event.srcAddress.toString().toLowerCase() as Hex;
-    const blockNumber = BigInt(event.block.number);
 
-    const rewardPool = await initializeRewardPool({ context, chainId, rewardPoolAddress, blockNumber });
+    const rewardPool = await initializeRewardPool({ context, chainId, rewardPoolAddress });
     if (!rewardPool) return;
 
     context.log.info('ClassicRewardPool initialized successfully', { rewardPoolAddress });
@@ -32,12 +31,10 @@ const initializeRewardPool = async ({
     context,
     chainId,
     rewardPoolAddress,
-    blockNumber,
 }: {
     context: HandlerContext;
     chainId: ChainId;
     rewardPoolAddress: Hex;
-    blockNumber: bigint;
 }): Promise<BeefyRewardPool_t | null> => {
     const existing = await getBeefyRewardPool(context, chainId, rewardPoolAddress);
     if (existing) return existing;
@@ -48,7 +45,6 @@ const initializeRewardPool = async ({
     const configs = await context.effect(getBeefyVaultConfigForAddressEffect, {
         chainId,
         address: rewardPoolAddress,
-        blockNumber,
     });
 
     const vault = await getBeefyVault(context, chainId, configs.vault_address);

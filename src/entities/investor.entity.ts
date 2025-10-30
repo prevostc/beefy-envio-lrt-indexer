@@ -12,13 +12,10 @@ export const getOrCreateInvestor = async ({
     address: Hex;
 }): Promise<Investor_t> => {
     const id = investorId({ address });
-    context.log.debug('Getting or creating investor', { id });
     const existing = await context.Investor.get(id);
     if (existing) {
-        context.log.debug('Investor already exists', { id });
         return existing;
     }
-    context.log.debug('Creating investor', { id });
     const entity: Investor_t = {
         id,
         address,

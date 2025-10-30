@@ -27,7 +27,6 @@ export const getOrCreateInvestorPosition = async ({
     investorAddress: Hex;
 }): Promise<InvestorPosition_t> => {
     const id = investorPositionId({ chainId, vault, investor });
-    context.log.debug('Getting or creating investor position', { id });
     const existing = await context.InvestorPosition.get(id);
     if (existing) return existing;
     return await context.InvestorPosition.getOrCreate({

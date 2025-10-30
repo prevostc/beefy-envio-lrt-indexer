@@ -26,22 +26,23 @@ export const getBeefyVaultConfigForAddressEffect = experimental_createEffect(
         name: 'getBeefyVaultConfigForAddress',
         input: {
             chainId: chainIdSchema,
-            blockNumber: S.bigint, // used to control cache
             address: hexSchema,
         },
         output: S.unknown as unknown as S.Schema<BeefyVault>,
         cache: false,
     },
     async ({ input, context }) => {
-        const { chainId, address, blockNumber } = input;
+        const { chainId, address } = input;
 
         const configs = await context.effect(getBeefyVaultConfigsEffect, {
             chainId,
-            cacheBuster: blockNumber / 100_000n,
+            cacheBuster: BigInt(Math.floor(Date.now() / (1000 * 60 * 60))),
         });
         const found = configs.find((v) => v.vault_address.toLowerCase() === (address as Hex).toLowerCase());
+
         if (!found) {
-            throw new Error(`Vault config not found for address ${address}`);
+            context.log.error('Vault config not found', { chainId, address });
+            throw new Error(`Vault config not found for vault ${chainId}:${address}`);
         }
         return found;
     }

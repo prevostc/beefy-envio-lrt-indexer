@@ -31,7 +31,6 @@ export const getVaultTvlBreakdownEffect = experimental_createEffect(
         const config = await context.effect(getBeefyVaultConfigForAddressEffect, {
             chainId,
             address: vault.address,
-            blockNumber,
         });
         const breakdown = await getVaultBreakdowns(client, blockNumber, config);
         return breakdown.balances.map((balance) => ({

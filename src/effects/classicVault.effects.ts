@@ -85,12 +85,17 @@ export const getClassicVaultTokens = experimental_createEffect(
             // vault v4 and before
             underlyingTokenAddress = tokenResult.result;
         } else {
-            context.log.error('ClassicVault want AND token call failed', { vaultAddress, chainId });
+            context.log.error('ClassicVault want AND token call failed', {
+                vaultAddress,
+                chainId,
+                wantResult,
+                tokenResult,
+            });
             throw new Error('ClassicVault want AND token call failed');
         }
 
         if (strategyResult.status === 'failure') {
-            context.log.error('ClassicVault strategy call failed', { vaultAddress, chainId });
+            context.log.error('ClassicVault strategy call failed', { vaultAddress, chainId, strategyResult });
             throw new Error('ClassicVault strategy call failed');
         }
 

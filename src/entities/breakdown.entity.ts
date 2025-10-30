@@ -80,7 +80,6 @@ export const upsertInvestorPositionBalanceBreakdown = async ({
     blockNumber: bigint;
 }): Promise<InvestorPositionBalanceBreakdown_t> => {
     const id = getInvestorPositionBalanceBreakdownId({ investorPosition, token, blockNumber });
-    context.log.debug('Getting or creating investor position balance breakdown', { id });
     const existing = await context.InvestorPositionBalanceBreakdown.get(id);
     const entity: InvestorPositionBalanceBreakdown_t = existing
         ? {

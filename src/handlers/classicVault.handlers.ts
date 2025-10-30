@@ -104,7 +104,6 @@ const initializeClassicVault = async ({
     const cfg = await context.effect(getBeefyVaultConfigForAddressEffect, {
         chainId,
         address: vaultAddress,
-        blockNumber,
     });
     const vaultId = cfg ? cfg.id : `${chainId}:${vaultAddress}`;
     const underlyingPlatform = cfg ? cfg.platformId : 'unknown';

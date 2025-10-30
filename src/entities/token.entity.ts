@@ -16,7 +16,6 @@ export const getOrCreateToken = async ({
     chainId: ChainId;
     tokenAddress: Hex;
 }): Promise<Token_t> => {
-    context.log.debug('Getting or creating token', { chainId, tokenAddress });
     const id = tokenId({ chainId, tokenAddress });
     const maybeExistingToken = await context.Token.get(id);
     if (maybeExistingToken) {
