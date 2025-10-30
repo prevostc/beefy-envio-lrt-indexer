@@ -4,7 +4,7 @@ import { chainIdSchema } from '../lib/chain';
 import { hexSchema } from '../lib/hex';
 import { getViemClient } from '../lib/viem';
 
-export const getTokenMetadata = experimental_createEffect(
+export const getTokenMetadataEffect = experimental_createEffect(
     {
         name: 'getTokenMetadata',
         input: {

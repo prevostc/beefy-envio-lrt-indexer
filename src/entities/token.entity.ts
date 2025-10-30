@@ -1,7 +1,7 @@
 import { BigDecimal, type handlerContext as HandlerContext } from 'generated';
 import type { Token_t } from 'generated/src/db/Entities.gen';
 import type { Hex } from 'viem';
-import { getTokenMetadata } from '../effects/token.effects';
+import { getTokenMetadataEffect } from '../effects/token.effects';
 import type { ChainId } from '../lib/chain';
 
 export const tokenId = ({ chainId, tokenAddress }: { chainId: ChainId; tokenAddress: Hex }) =>
@@ -23,7 +23,7 @@ export const getOrCreateToken = async ({
         return maybeExistingToken;
     }
 
-    const tokenMetadata = await context.effect(getTokenMetadata, {
+    const tokenMetadata = await context.effect(getTokenMetadataEffect, {
         tokenAddress: tokenAddress,
         chainId: chainId,
     });
