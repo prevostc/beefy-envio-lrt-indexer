@@ -4,7 +4,7 @@ import { chainIdSchema } from '../lib/chain';
 import { getVaultBreakdowns } from '../lib/vault-breakdown/breakdown/getVaultBreakdown';
 import type { BeefyProtocolType } from '../lib/vault-breakdown/vault/getBeefyVaultConfig';
 import { getViemClient } from '../lib/viem';
-import { getBeefyVaultConfigForAddressEffect } from './vaultConfig.effects';
+import { getBeefyVaultConfigForAddress } from './vaultConfig.effects';
 
 export const getVaultTvlBreakdownEffect = experimental_createEffect(
     {
@@ -28,11 +28,12 @@ export const getVaultTvlBreakdownEffect = experimental_createEffect(
     async ({ input, context }) => {
         const { chainId, blockNumber, vault } = input;
         const client = getViemClient(chainId, context.log);
-        const config = await context.effect(getBeefyVaultConfigForAddressEffect, {
+        const vaultConfig = await getBeefyVaultConfigForAddress({
+            context,
             chainId,
             address: vault.address,
         });
-        const breakdown = await getVaultBreakdowns(client, blockNumber, config);
+        const breakdown = await getVaultBreakdowns(client, blockNumber, vaultConfig);
         return breakdown.balances.map((balance) => ({
             tokenAddress: balance.tokenAddress,
             tokenBalance: BigInt(balance.vaultBalance),

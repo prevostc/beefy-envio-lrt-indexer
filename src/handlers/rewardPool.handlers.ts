@@ -3,7 +3,7 @@ import type { BeefyRewardPool_t } from 'generated/src/db/Entities.gen';
 import type { HandlerContext } from 'generated/src/Types';
 import type { Hex } from 'viem';
 import { getRewardPoolTokens } from '../effects/rewardPool.effects';
-import { getBeefyVaultConfigForAddressEffect } from '../effects/vaultConfig.effects';
+import { getBeefyVaultConfigForAddress } from '../effects/vaultConfig.effects';
 import { createBeefyRewardPool, getBeefyRewardPool } from '../entities/beefyRewardPool.entity';
 import { getBeefyVault } from '../entities/beefyVault.entity';
 import { getOrCreateToken } from '../entities/token.entity';
@@ -42,12 +42,13 @@ const initializeRewardPool = async ({
     context.log.info('Initializing BeefyRewardPool', { rewardPoolAddress, chainId });
 
     // Find the parent vault from config
-    const configs = await context.effect(getBeefyVaultConfigForAddressEffect, {
+    const vaultConfig = await getBeefyVaultConfigForAddress({
+        context,
         chainId,
         address: rewardPoolAddress,
     });
 
-    const vault = await getBeefyVault(context, chainId, configs.vault_address);
+    const vault = await getBeefyVault(context, chainId, vaultConfig.vault_address);
     if (!vault) {
         throw new Error('RewardPool vault not found');
     }

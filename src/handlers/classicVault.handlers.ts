@@ -3,7 +3,7 @@ import type { BeefyVault_t } from 'generated/src/db/Entities.gen';
 import type { HandlerContext } from 'generated/src/Types';
 import type { Hex } from 'viem';
 import { getClassicVaultTokens } from '../effects/classicVault.effects';
-import { getBeefyVaultConfigForAddressEffect } from '../effects/vaultConfig.effects';
+import { getBeefyVaultConfigForAddress } from '../effects/vaultConfig.effects';
 import { createBeefyVault, getBeefyVault } from '../entities/beefyVault.entity';
 import { getOrCreateInvestor } from '../entities/investor.entity';
 import { getOrCreateInvestorPosition } from '../entities/investorPosition.entity';
@@ -101,12 +101,13 @@ const initializeClassicVault = async ({
         getOrCreateToken({ context, chainId, tokenAddress: underlyingTokenAddress }),
     ]);
 
-    const cfg = await context.effect(getBeefyVaultConfigForAddressEffect, {
+    const vaultConfig = await getBeefyVaultConfigForAddress({
+        context,
         chainId,
         address: vaultAddress,
     });
-    const vaultId = cfg ? cfg.id : `${chainId}:${vaultAddress}`;
-    const underlyingPlatform = cfg ? cfg.platformId : 'unknown';
+    const vaultId = vaultConfig ? vaultConfig.id : `${chainId}:${vaultAddress}`;
+    const underlyingPlatform = vaultConfig ? vaultConfig.platformId : 'unknown';
 
     return await createBeefyVault({
         context,
