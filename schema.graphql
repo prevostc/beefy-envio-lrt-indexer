@@ -21,7 +21,6 @@ type ClockTick {
   blockNumber: BigInt!
 }
 
-
 """
 A investor is an address that interacts with our protocol.
 """
@@ -67,14 +66,13 @@ type Token {
 
   "The token balances of the token"
   investorPosition: [InvestorPosition!]! @derivedFrom(field: "token")
-  
+
   "The vaults that hold this token as a sub-balance"
   vaultBalanceBreakdowns: [VaultBalanceBreakdown!]! @derivedFrom(field: "token")
 
   "The investor position breakdown that hold this token"
   investorPositionBalanceBreakdowns: [InvestorPositionBalanceBreakdown!]! @derivedFrom(field: "token")
 }
-
 
 """
 The status of the contract's initialization
@@ -89,7 +87,6 @@ enum InitializableStatus {
 ############################
 ###### Beefy Products ######
 ############################
-
 
 """
 A Beefy vault
@@ -217,11 +214,9 @@ type VaultBalanceBreakdown {
   balance: BigDecimal! @config(precision: 100, scale: 24)
 }
 
-
 ###################################
 ###### Investor Positions #########
 ###################################
-
 
 type InvestorPosition {
   "chainId + vault address + investor address"
