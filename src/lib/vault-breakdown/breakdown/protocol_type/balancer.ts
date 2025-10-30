@@ -1,4 +1,4 @@
-import { type Hex, getContract } from 'viem';
+import { getContract, type Hex } from 'viem';
 import type { BeefyViemClient } from '../../../utils/viemClient';
 import { BalancerPoolAbi } from '../../abi/BalancerPool';
 import { BalancerVaultAbi } from '../../abi/BalancerVault';
@@ -36,55 +36,50 @@ export function getVaultTokenBreakdownBalancer(vault: BeefyVault): Array<TokenBa
 
  */
 export const getBalancerAuraVaultBreakdown = async (
-  client: BeefyViemClient,
-  blockNumber: bigint,
-  vault: BeefyVault
+    client: BeefyViemClient,
+    blockNumber: bigint,
+    vault: BeefyVault
 ): Promise<BeefyVaultBreakdown> => {
-  const vaultContract = getContract({
-    client,
-    address: vault.vault_address,
-    abi: BeefyVaultV7Abi,
-  });
+    const vaultContract = getContract({
+        client,
+        address: vault.vault_address,
+        abi: BeefyVaultV7Abi,
+    });
 
-  const balancerPoolContract = getContract({
-    client,
-    address: vault.undelying_lp_address,
-    abi: BalancerPoolAbi,
-  });
+    const balancerPoolContract = getContract({
+        client,
+        address: vault.undelying_lp_address,
+        abi: BalancerPoolAbi,
+    });
 
-  const [
-    vaultWantBalance,
-    vaultTotalSupply,
-    balancerVaultAddress,
-    balancerPoolId,
-    balancerTotalSupply,
-  ] = await Promise.all([
-    vaultContract.read.balance({ blockNumber }),
-    vaultContract.read.totalSupply({ blockNumber }),
-    balancerPoolContract.read.getVault({ blockNumber }),
-    balancerPoolContract.read.getPoolId({ blockNumber }),
-    balancerPoolContract.read.getActualSupply({ blockNumber }),
-  ]);
+    const [vaultWantBalance, vaultTotalSupply, balancerVaultAddress, balancerPoolId, balancerTotalSupply] =
+        await Promise.all([
+            vaultContract.read.balance({ blockNumber }),
+            vaultContract.read.totalSupply({ blockNumber }),
+            balancerPoolContract.read.getVault({ blockNumber }),
+            balancerPoolContract.read.getPoolId({ blockNumber }),
+            balancerPoolContract.read.getActualSupply({ blockNumber }),
+        ]);
 
-  const balancerVaultContract = getContract({
-    client,
-    address: balancerVaultAddress,
-    abi: BalancerVaultAbi,
-  });
-  const poolTokenRes = await balancerVaultContract.read.getPoolTokens([balancerPoolId], {
-    blockNumber,
-  });
-  const poolTokens = poolTokenRes[0];
-  const poolBalances = poolTokenRes[1];
+    const balancerVaultContract = getContract({
+        client,
+        address: balancerVaultAddress,
+        abi: BalancerVaultAbi,
+    });
+    const poolTokenRes = await balancerVaultContract.read.getPoolTokens([balancerPoolId], {
+        blockNumber,
+    });
+    const poolTokens = poolTokenRes[0];
+    const poolBalances = poolTokenRes[1];
 
-  return {
-    vault,
-    blockNumber,
-    vaultTotalSupply,
-    isLiquidityEligible: true,
-    balances: poolTokens.map((poolToken, i) => ({
-      tokenAddress: poolToken.toLocaleLowerCase() as Hex,
-      vaultBalance: (poolBalances[i] * vaultWantBalance) / balancerTotalSupply,
-    })),
-  };
+    return {
+        vault,
+        blockNumber,
+        vaultTotalSupply,
+        isLiquidityEligible: true,
+        balances: poolTokens.map((poolToken, i) => ({
+            tokenAddress: poolToken.toLocaleLowerCase() as Hex,
+            vaultBalance: (poolBalances[i] * vaultWantBalance) / balancerTotalSupply,
+        })),
+    };
 };
