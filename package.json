@@ -1,0 +1,46 @@
+{
+  "name": "envio-indexer",
+  "version": "0.1.0",
+  "scripts": {
+    "clean": "tsc --clean",
+    "build": "tsc --build",
+    "watch": "tsc --watch",
+    "mocha": "ts-mocha test/**/*.ts",
+    "codegen": "envio codegen",
+    "dev": "envio dev",
+    "start": "envio start",
+    "stop": "envio stop",
+    "deploy": "git checkout prod && git merge origin/main --ff-only && git push && git checkout -",
+    "format": "biome check --write --unsafe",
+    "format:safe": "biome check --write",
+    "db:console": "PGPASSWORD=testing psql -h localhost -p 5433 -U postgres -d envio-dev",
+    "test": "pnpm run test:unit && pnpm run test:lint && pnpm run test:ts",
+    "test:unit": "pnpm mocha",
+    "test:lint": "biome ci",
+    "test:ts": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.2.3",
+    "@types/bun": "^1.2.23",
+    "@types/chai": "4.3.20",
+    "@types/mocha": "10.0.6",
+    "@types/node": "20.8.8",
+    "chai": "4.3.10",
+    "lefthook": "1.13.1",
+    "mocha": "10.2.0",
+    "ts-mocha": "10.0.0",
+    "typescript": "5.9.2"
+  },
+  "dependencies": {
+    "blockchain-addressbook": "0.54.77",
+    "envio": "2.29.1",
+    "remeda": "^2.32.0",
+    "viem": "2.37.9"
+  },
+  "optionalDependencies": {
+    "generated": "./generated"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

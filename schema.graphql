@@ -1,0 +1,279 @@
+"""
+A clock tick is a record of time passing.
+This is used to update the protocol's stats at regular intervals.
+"""
+type ClockTick {
+  "chainId + truncated timestamp + tick period"
+  id: ID!
+
+  """
+  Duration of the snapshot period in seconds.
+  Available periods:
+  - 15 minutes: 900
+  - 1 day: 86400
+  """
+  period: BigInt! @index
+  "Timestamp the tick was initiated at, rounded to period"
+  roundedTimestamp: BigInt!
+  "Actual timestamp tick was initiated at"
+  timestamp: BigInt!
+  "The block number of the tick"
+  blockNumber: BigInt!
+}
+
+
+"""
+A investor is an address that interacts with our protocol.
+"""
+type Investor {
+  "investor address"
+  id: ID!
+
+  "The investor address"
+  address: Bytes! @index
+
+  "The investor's balances in all the tracked vaults"
+  positions: [InvestorPosition!]! @derivedFrom(field: "investor")
+}
+
+"""
+A token is a representation of a fungible asset on the blockchain
+as specified by the ERC20 standard.
+"""
+type Token {
+  "chain - token address"
+  id: ID!
+
+  "chain id"
+  chainId: Int! @index
+
+  # metadata
+
+  "The token address"
+  address: Bytes! @index
+  "The token symbol"
+  symbol: String
+  "The token name"
+  name: String
+  "The number of decimals the token uses"
+  decimals: Int!
+
+  ### metrics
+
+  "The total supply of the token"
+  totalSupply: BigDecimal! @config(precision: 100, scale: 24)
+
+  ### references
+
+  "The token balances of the token"
+  investorPosition: [InvestorPosition!]! @derivedFrom(field: "token")
+  
+  "The vaults that hold this token as a sub-balance"
+  vaultBalanceBreakdowns: [VaultBalanceBreakdown!]! @derivedFrom(field: "token")
+
+  "The investor position breakdown that hold this token"
+  investorPositionBalanceBreakdowns: [InvestorPositionBalanceBreakdown!]! @derivedFrom(field: "token")
+}
+
+
+"""
+The status of the contract's initialization
+"""
+enum InitializableStatus {
+  "The contract is in the process of being initialized"
+  INITIALIZING
+  "The contract is able to accept deposits and earn yield"
+  INITIALIZED
+}
+
+############################
+###### Beefy Products ######
+############################
+
+
+"""
+A Beefy vault
+"""
+type BeefyVault @entity {
+  "chainId + vault address"
+  id: ID!
+
+  "chain id"
+  chainId: Int! @index
+  "The vault address"
+  address: Bytes! @index
+
+  "Moo token address"
+  sharesToken: Token!
+
+  "Input lp token address"
+  underlyingToken: Token!
+
+  "The vault's strategy"
+  strategy: BeefyStrategy!
+
+  "The vault's reward pools"
+  rewardPools: [BeefyRewardPool!]! @derivedFrom(field: "vault")
+
+  "Whether the vault has been initialized"
+  initializableStatus: InitializableStatus!
+
+  "The underlying platform this vault is using"
+  underlyingPlatform: String!
+
+  "The vault's human readable key. Used in urls and the UI."
+  vaultId: String!
+
+  "The vault's last balance breakdown update block number"
+  lastBalanceBreakdownUpdateBlockNumber: BigInt!
+
+  "The vault's last balance breakdown update timestamp"
+  lastBalanceBreakdownUpdateTimestamp: BigInt!
+
+  "The vault's total shares supply"
+  sharesTokenTotalSupply: BigDecimal! @config(precision: 100, scale: 24)
+
+  "positions in the vault"
+  positions: [InvestorPosition!]! @derivedFrom(field: "vault")
+
+  "breakdown of the vault underlying token balance"
+  underlyingTokenBalanceBreakdown: [VaultBalanceBreakdown!]! @derivedFrom(field: "vault")
+
+  "breakdown update events"
+  underlyingTokenBalanceBreakdownUpdateEvents: [VaultBalanceBreakdownUpdateEvent!]! @derivedFrom(field: "vault")
+}
+
+"""
+A strategy is a contract that manages the assets of a vault.
+This is mostly used to start tracking the events and link them to the vault on new event
+"""
+type BeefyStrategy {
+  "chainId + strategy address"
+  id: ID!
+
+  "chain id"
+  chainId: Int! @index
+  "The strategy address"
+  address: Bytes! @index
+
+  "The vault the strategy is managing"
+  vault: BeefyVault!
+
+  "Whether the strategy has been initialized"
+  initializableStatus: InitializableStatus!
+}
+
+"""
+A staking contract that expect to receive the vault shares token
+and stake it to earn more rewards.
+It also an ERC20 token that can be passed around.
+"""
+type BeefyRewardPool {
+  "chainId + reward pool address"
+  id: ID!
+
+  "chain id"
+  chainId: Int! @index
+  "The reward pool address"
+  address: Bytes! @index
+
+  "The vault the staking contract is for"
+  vault: BeefyVault!
+
+  "This reward pool's token"
+  rcowToken: Token!
+
+  "Whether the reward pool has been initialized"
+  initializableStatus: InitializableStatus!
+}
+
+#########################################
+###### Vault Balance Breakdowns #########
+#########################################
+
+"""
+A breakdown of the balance of a token
+"""
+type VaultBalanceBreakdown {
+  "chainId + vault address this breakdown is for + token address of the breakdown item + block number"
+  id: ID!
+
+  "chain id"
+  chainId: Int! @index
+
+  "The vault this breakdown is for"
+  vault: BeefyVault! @index
+
+  "Token address of the breakdown item"
+  token: Token! @index
+
+  "Block number of the breakdown"
+  blockNumber: BigInt! @index
+
+  "Block timestamp of the breakdown"
+  blockTimestamp: BigInt! @index
+
+  "Balance of the breakdown item"
+  balance: BigDecimal! @config(precision: 100, scale: 24)
+}
+
+
+###################################
+###### Investor Positions #########
+###################################
+
+
+type InvestorPosition {
+  "chainId + vault address + investor address"
+  id: ID!
+
+  "chain id"
+  chainId: Int! @index
+
+  "The investor"
+  investor: Investor! @index
+
+  "The vault"
+  vault: BeefyVault! @index
+
+  "Amount of shares"
+  sharesBalance: BigDecimal! @config(precision: 100, scale: 24)
+
+  "Breakdown of the investor position balance"
+  balanceBreakdown: [InvestorPositionBalanceBreakdown!]! @derivedFrom(field: "investorPosition")
+}
+
+type InvestorPositionBalanceBreakdown {
+  "Investor position id + token address + block number"
+  id: ID!
+
+  "chain id"
+  chainId: Int! @index
+
+  "The investor position"
+  investorPosition: InvestorPosition! @index
+
+  "The token"
+  token: Token! @index
+
+  "Balance of the breakdown item"
+  balance: BigDecimal! @config(precision: 100, scale: 24)
+
+  """
+  Time weighted balance UP UNTIL the last time we updated the time weighted balance.
+  This is the balance times the amount of time the investor has held the token, in seconds.
+  ex: if the investor has held 100 tokens for 20 seconds, the time weighted balance is 2000
+  """
+  timeWeightedBalance: BigDecimal!
+
+  """
+  Last time the balance breakdown was updated.
+
+  This can be used to approximate the time weighted balance at any block using:
+  timeWeightedBalance + balance * (block.timestamp - lastUpdateTimestamp)
+  """
+  lastUpdateTimestamp: BigInt!
+
+  "last time the balance was updated"
+  lastUpdateBlock: BigInt!
+}
