@@ -1,5 +1,4 @@
 import { experimental_createEffect } from 'envio';
-import { blacklistStatus } from '../lib/blacklist';
 import { chainIdSchema } from '../lib/chain';
 import { ADDRESS_ZERO } from '../lib/decimal';
 import { hexSchema } from '../lib/hex';
@@ -15,7 +14,6 @@ export const getRewardPoolTokens = experimental_createEffect(
         output: {
             shareTokenAddress: hexSchema,
             underlyingTokenAddress: hexSchema,
-            blacklistStatus: blacklistStatus,
         },
         cache: true,
     },
@@ -50,11 +48,7 @@ export const getRewardPoolTokens = experimental_createEffect(
 
         if (underlyingTokenResult.status === 'failure') {
             context.log.error('RewardPool stakedToken call failed', { rewardPoolAddress, chainId });
-            return {
-                shareTokenAddress,
-                underlyingTokenAddress: ADDRESS_ZERO,
-                blacklistStatus: 'blacklisted' as const,
-            };
+            throw new Error('RewardPool stakedToken call failed');
         }
 
         const underlyingTokenAddress = underlyingTokenResult.result;
@@ -62,11 +56,7 @@ export const getRewardPoolTokens = experimental_createEffect(
         context.log.info('RewardPool data fetched', { rewardPoolAddress, shareTokenAddress, underlyingTokenAddress });
 
         if (underlyingTokenAddress === ADDRESS_ZERO) {
-            return {
-                shareTokenAddress,
-                underlyingTokenAddress,
-                blacklistStatus: 'blacklisted' as const,
-            };
+            throw new Error('RewardPool underlying token is zero address');
         }
 
         return {

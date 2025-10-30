@@ -1,10 +1,12 @@
-import { groupBy } from 'lodash';
+import * as R from 'remeda';
 import type { Hex } from 'viem';
-import type { ChainId } from '../../config/chains';
-import { getWNativeToken, isNativeToken } from '../../utils/addressbook';
-import { getAsyncCache } from '../../utils/async-lock';
-import { FriendlyError } from '../../utils/error';
-import { BEEFY_BOOST_API, BEEFY_COW_VAULT_API, BEEFY_GOV_API, BEEFY_MOO_VAULT_API } from '../config';
+import { getWNativeToken, isNativeTokenSymbol } from '../../addressbook';
+import type { ChainId } from '../../chain';
+
+const BEEFY_MOO_VAULT_API = 'https://api.beefy.finance/vaults';
+const BEEFY_COW_VAULT_API = 'https://api.beefy.finance/cow-vaults';
+const BEEFY_GOV_API = 'https://api.beefy.finance/gov-vaults';
+const BEEFY_BOOST_API = 'https://api.beefy.finance/boosts';
 
 export type BeefyVault = {
     id: string;
@@ -175,54 +177,60 @@ const protocol_map: Record<ApiPlatformId, BeefyProtocolType> = {
     euler: 'euler',
 };
 
-export const getBeefyVaultConfig = async (
-    chain: ChainId,
-    vaultFilter: (vault: BeefyVault) => boolean
-): Promise<BeefyVault[]> => {
-    const asyncCache = getAsyncCache();
-    const allConfigs = await asyncCache.wrap(`beefy-vault-config:${chain}`, 5 * 60 * 1000, () => getAllConfigs(chain));
-    const filteredConfigs = allConfigs.filter(vaultFilter);
+export const getBeefyVaultConfigs = async (chain: ChainId): Promise<BeefyVault[]> => {
+    const allConfigs = await getAllConfigs(chain);
 
     // check for undefined protocol types
-    const notFoundProtocols = filteredConfigs.filter((v) => !v.protocol_type);
+    const notFoundProtocols = allConfigs.filter((v) => !v.protocol_type);
     if (notFoundProtocols.length > 0) {
         const messages = notFoundProtocols.map(
             (v) =>
                 `Unknown platformId ${v.platformId} for vault ${v.id}. Devs need to implement breakdown for this protocol`
         );
-        throw new FriendlyError(messages.join('\n'));
+        throw new Error(messages.join('\n'));
     }
 
-    return filteredConfigs;
+    return allConfigs;
 };
 
 const getAllConfigs = async (chain: ChainId): Promise<BeefyVault[]> => {
     const [cowVaultsData, mooVaultsData, clmRewardPoolData, [boostData, vaultRewardPoolData]] = await Promise.all([
         fetch(`${BEEFY_COW_VAULT_API}/${chain}`)
             .then((res) => res.json())
-            .then((res) => (res as ApiClmManager[]).filter((vault) => vault.chain === chain)),
+            .then((res) => (res as ApiClmManager[]).filter((vault) => vault.chain === String(chain))),
         fetch(`${BEEFY_MOO_VAULT_API}/${chain}`)
             .then((res) => res.json())
             .then((res) =>
                 (res as ApiVault[])
-                    .filter((vault) => vault.chain === chain)
+                    .filter((vault) => vault.chain === String(chain))
                     .filter((vault) => vault.isGovVault !== true)
             ),
         fetch(`${BEEFY_GOV_API}/${chain}`)
             .then((res) => res.json())
-            .then((res) => (res as ApiClmRewardPool[]).filter((g) => g.chain === chain).filter((g) => g.version === 2)),
+            .then((res) =>
+                (res as ApiClmRewardPool[]).filter((g) => g.chain === String(chain)).filter((g) => g.version === 2)
+            ),
         fetch(`${BEEFY_BOOST_API}/${chain}`)
             .then((res) => res.json())
             .then((res) => [
-                (res as ApiBoost[]).filter((g) => g.chain === chain).filter((g) => g.version !== 2),
-                (res as ApiBoost[]).filter((g) => g.chain === chain).filter((g) => g.version === 2),
+                (res as ApiBoost[]).filter((g) => g.chain === String(chain)).filter((g) => g.version !== 2),
+                (res as ApiBoost[]).filter((g) => g.chain === String(chain)).filter((g) => g.version === 2),
             ]),
     ]);
 
     const clmManagerAddresses = new Set(cowVaultsData.map((v) => v.earnedTokenAddress.toLocaleLowerCase()));
-    const boostPerUnderlyingAddress = groupBy(boostData, (b) => b.tokenAddress?.toLocaleLowerCase());
-    const vaultRewardPoolDataPerVaultAddress = groupBy(vaultRewardPoolData, (v) => v.tokenAddress.toLocaleLowerCase());
-    const clmRewardPoolDataPerClmAddress = groupBy(clmRewardPoolData, (c) => c.tokenAddress.toLocaleLowerCase());
+    const boostPerUnderlyingAddress = R.pipe(
+        boostData,
+        R.groupBy((b) => b.tokenAddress?.toLocaleLowerCase())
+    );
+    const vaultRewardPoolDataPerVaultAddress = R.pipe(
+        vaultRewardPoolData,
+        R.groupBy((v) => v.tokenAddress.toLocaleLowerCase())
+    );
+    const clmRewardPoolDataPerClmAddress = R.pipe(
+        clmRewardPoolData,
+        R.groupBy((c) => c.tokenAddress.toLocaleLowerCase())
+    );
 
     const clmVaultConfigs = cowVaultsData.map((vault): BeefyVault => {
         const undelying_lp_address = vault.tokenAddress.toLocaleLowerCase() as Hex;
@@ -231,7 +239,7 @@ const getAllConfigs = async (chain: ChainId): Promise<BeefyVault[]> => {
         const protocol_type: BeefyProtocolType | undefined =
             vault.type === 'cowcentrated' ? 'beefy_clm' : protocol_map[vault.platformId];
         if (protocol_type === 'beefy_clm_vault') {
-            throw new FriendlyError('Invalid protocol');
+            throw new Error('Invalid protocol');
         }
         const reward_pools = clmRewardPoolDataPerClmAddress[vault_address] ?? [];
 
@@ -265,13 +273,16 @@ const getAllConfigs = async (chain: ChainId): Promise<BeefyVault[]> => {
         let underlying_lp_address = vault.tokenAddress?.toLocaleLowerCase() as Hex | undefined;
         const vault_address = vault.earnedTokenAddress.toLocaleLowerCase() as Hex;
 
-        if (!underlying_lp_address && (isNativeToken(chain, vault.token) || isNativeToken(chain, vault.name))) {
+        if (
+            !underlying_lp_address &&
+            (isNativeTokenSymbol(chain, vault.token) || isNativeTokenSymbol(chain, vault.name))
+        ) {
             const wnative = getWNativeToken(chain);
             underlying_lp_address = wnative.address as Hex;
         }
 
         if (!underlying_lp_address) {
-            throw new FriendlyError(`Missing "tokenAddress" field for vault ${vault.id}.`);
+            throw new Error(`Missing "tokenAddress" field for vault ${vault.id}.`);
         }
 
         const protocol_type: BeefyProtocolType | undefined = clmManagerAddresses.has(underlying_lp_address)

@@ -1,5 +1,5 @@
 import { getContract, type Hex } from 'viem';
-import type { BeefyViemClient } from '../../../utils/viemClient';
+import type { BeefyViemClient } from '../../../viem';
 import { BeefyClmStrategyAbi } from '../../abi/BeefyClmStrategy';
 import { BeefyVaultConcLiqAbi } from '../../abi/BeefyVaultConcLiq';
 import { BeefyVaultV7Abi } from '../../abi/BeefyVaultV7Abi';
@@ -88,7 +88,12 @@ export const getBeefyClmVaultBreakdown = async (
         isLiquidityEligible: underlyingClmBreakdown.isLiquidityEligible,
         balances: underlyingClmBreakdown.balances.map((tokenBalance) => ({
             tokenAddress: tokenBalance.tokenAddress,
-            vaultBalance: (underlyingBalance * tokenBalance.vaultBalance) / underlyingTotalSypply,
+            vaultBalance:
+                (underlyingBalance *
+                    (typeof tokenBalance.vaultBalance === 'bigint'
+                        ? tokenBalance.vaultBalance
+                        : BigInt(Math.trunc(tokenBalance.vaultBalance)))) /
+                underlyingTotalSypply,
         })),
     };
 };

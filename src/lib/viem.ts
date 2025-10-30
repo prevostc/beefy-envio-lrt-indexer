@@ -200,3 +200,5 @@ export const getViemClient = (chainId: ChainId, logger: Logger) => {
         }),
     });
 };
+
+export type BeefyViemClient = ReturnType<typeof getViemClient>;

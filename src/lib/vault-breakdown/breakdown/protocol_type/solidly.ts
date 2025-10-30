@@ -1,5 +1,5 @@
 import { getContract, type Hex } from 'viem';
-import type { BeefyViemClient } from '../../../utils/viemClient';
+import type { BeefyViemClient } from '../../../viem';
 import { BeefyVaultV7Abi } from '../../abi/BeefyVaultV7Abi';
 import { SolidlyPoolAbi } from '../../abi/SolidlyPoolAbi';
 import type { BeefyVault } from '../../vault/getBeefyVaultConfig';

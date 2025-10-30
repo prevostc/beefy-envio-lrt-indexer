@@ -64,9 +64,6 @@ type Token {
 
   ### references
 
-  "The token balances of the token"
-  investorPosition: [InvestorPosition!]! @derivedFrom(field: "token")
-
   "The vaults that hold this token as a sub-balance"
   vaultBalanceBreakdowns: [VaultBalanceBreakdown!]! @derivedFrom(field: "token")
 
@@ -135,9 +132,6 @@ type BeefyVault @entity {
 
   "breakdown of the vault underlying token balance"
   underlyingTokenBalanceBreakdown: [VaultBalanceBreakdown!]! @derivedFrom(field: "vault")
-
-  "breakdown update events"
-  underlyingTokenBalanceBreakdownUpdateEvents: [VaultBalanceBreakdownUpdateEvent!]! @derivedFrom(field: "vault")
 }
 
 """

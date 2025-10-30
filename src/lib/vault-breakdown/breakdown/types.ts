@@ -8,6 +8,6 @@ export type BeefyVaultBreakdown = {
     isLiquidityEligible: boolean;
     balances: {
         tokenAddress: Hex;
-        vaultBalance: bigint;
+        vaultBalance: bigint | number;
     }[];
 };

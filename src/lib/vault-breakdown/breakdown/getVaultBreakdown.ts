@@ -1,5 +1,4 @@
-import type { ChainId } from '../../config/chains';
-import { type BeefyViemClient, getViemClient } from '../../utils/viemClient';
+import type { BeefyViemClient } from '../../viem';
 import type { BeefyProtocolType, BeefyVault } from '../vault/getBeefyVaultConfig';
 import { getAaveVaultBreakdown } from './protocol_type/aave';
 import { getBalancerAuraVaultBreakdown } from './protocol_type/balancer';
@@ -34,30 +33,9 @@ const breakdownMethods: Record<BeefyProtocolType, BreakdownMethod> = {
 };
 
 export const getVaultBreakdowns = async (
-    chainId: ChainId,
+    viemClient: BeefyViemClient,
     blockNumber: bigint,
-    vaults: BeefyVault[]
-): Promise<BeefyVaultBreakdown[]> => {
-    // group by protocol type
-    const vaultsPerProtocol: Record<BeefyProtocolType, BeefyVault[]> = vaults.reduce(
-        (acc, vault) => {
-            if (!acc[vault.protocol_type]) {
-                acc[vault.protocol_type] = [];
-            }
-            acc[vault.protocol_type].push(vault);
-            return acc;
-        },
-        {} as Record<BeefyProtocolType, BeefyVault[]>
-    );
-
-    return (
-        await Promise.all(
-            (Object.keys(vaultsPerProtocol) as BeefyProtocolType[]).map(async (protocolType) => {
-                const client = getViemClient(chainId);
-                const vaults = vaultsPerProtocol[protocolType];
-                const getBreakdown = breakdownMethods[protocolType];
-                return await Promise.all(vaults.map((vault) => getBreakdown(client, blockNumber, vault)));
-            })
-        )
-    ).flat();
+    vault: BeefyVault
+): Promise<BeefyVaultBreakdown> => {
+    return await breakdownMethods[vault.protocol_type](viemClient, blockNumber, vault);
 };

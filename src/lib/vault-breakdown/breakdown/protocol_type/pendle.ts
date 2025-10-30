@@ -1,5 +1,5 @@
 import { getContract } from 'viem';
-import type { BeefyViemClient } from '../../../utils/viemClient';
+import type { BeefyViemClient } from '../../../viem';
 import { BeefyVaultV7Abi } from '../../abi/BeefyVaultV7Abi';
 import { PendleMarketAbi } from '../../abi/PendleMarket';
 import { PendleSyTokenAbi } from '../../abi/PendleSyToken';

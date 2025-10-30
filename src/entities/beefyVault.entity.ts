@@ -1,0 +1,87 @@
+import { BigDecimal, type handlerContext as HandlerContext } from 'generated';
+import type { BeefyStrategy_t, BeefyVault_t, Token_t } from 'generated/src/db/Entities.gen';
+import type { Hex } from 'viem';
+import type { ChainId } from '../lib/chain';
+import { InitializableStatus } from '../lib/initializableStatus';
+
+export const beefyVaultId = ({ chainId, address }: { chainId: ChainId; address: Hex }) =>
+    `${chainId}-${address.toLowerCase()}`;
+
+export const getBeefyVault = async (context: HandlerContext, chainId: ChainId, address: Hex) => {
+    const id = beefyVaultId({ chainId, address });
+    return await context.BeefyVault.get(id);
+};
+
+export const createBeefyVault = async ({
+    context,
+    chainId,
+    address,
+    sharesToken,
+    underlyingToken,
+    strategyAddress,
+    vaultId,
+    underlyingPlatform,
+    initializedBlockNumber,
+    initializedTimestamp,
+}: {
+    context: HandlerContext;
+    chainId: ChainId;
+    address: Hex;
+    sharesToken: Token_t;
+    underlyingToken: Token_t;
+    strategyAddress: Hex;
+    vaultId: string;
+    underlyingPlatform: string;
+    initializedBlockNumber: bigint;
+    initializedTimestamp: bigint;
+}): Promise<BeefyVault_t> => {
+    const id = beefyVaultId({ chainId, address });
+    context.log.debug('Getting or creating beefy vault', { id });
+    const vault: BeefyVault_t = {
+        id,
+        chainId,
+        address,
+        sharesToken_id: sharesToken.id,
+        underlyingToken_id: underlyingToken.id,
+        strategy_id: `${chainId}-${strategyAddress.toLowerCase()}`,
+        initializableStatus: InitializableStatus.INITIALIZED,
+        underlyingPlatform,
+        vaultId,
+        lastBalanceBreakdownUpdateBlockNumber: initializedBlockNumber,
+        lastBalanceBreakdownUpdateTimestamp: initializedTimestamp,
+        sharesTokenTotalSupply: new BigDecimal(0),
+    } as unknown as BeefyVault_t;
+
+    context.BeefyVault.set(vault);
+
+    await createBeefyStrategy({ context, chainId, strategyAddress, vault });
+
+    return vault;
+};
+
+export const getBeefyStrategyId = ({ chainId, address }: { chainId: ChainId; address: Hex }) =>
+    `${chainId}-${address.toLowerCase()}`;
+
+export const createBeefyStrategy = async ({
+    context,
+    chainId,
+    strategyAddress,
+    vault,
+}: {
+    context: HandlerContext;
+    chainId: ChainId;
+    strategyAddress: Hex;
+    vault: BeefyVault_t;
+}): Promise<BeefyStrategy_t> => {
+    const id = getBeefyStrategyId({ chainId, address: strategyAddress });
+    context.log.debug('Getting or creating beefy strategy', { id });
+    const strategy: BeefyStrategy_t = {
+        id,
+        chainId,
+        address: strategyAddress,
+        vault_id: vault.id,
+        initializableStatus: InitializableStatus.INITIALIZED,
+    } as unknown as BeefyStrategy_t;
+    context.BeefyStrategy.set(strategy);
+    return strategy;
+};

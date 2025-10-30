@@ -1,142 +1,67 @@
 import { RewardPool } from 'generated';
-import type { RewardPool_t } from 'generated/src/db/Entities.gen';
+import type { BeefyRewardPool_t } from 'generated/src/db/Entities.gen';
 import type { HandlerContext } from 'generated/src/Types';
 import type { Hex } from 'viem';
 import { getRewardPoolTokens } from '../effects/rewardPool.effects';
-import { createPoolRewardedEvent } from '../entities/poolRewarded.event';
-import { createRewardPool, getRewardPool } from '../entities/rewardPool.entity';
-import { getOrCreateToken, getTokenOrThrow } from '../entities/token.entity';
-import { logBlacklistStatus } from '../lib/blacklist';
+import { getBeefyVaultConfigForAddressEffect } from '../effects/vaultConfig.effects';
+import { createBeefyRewardPool, getBeefyRewardPool } from '../entities/beefyRewardPool.entity';
+import { getBeefyVault } from '../entities/beefyVault.entity';
+import { getOrCreateToken } from '../entities/token.entity';
 import { type ChainId, toChainId } from '../lib/chain';
-import { handleTokenTransfer } from '../lib/token';
 
 RewardPool.Initialized.handler(async ({ event, context }) => {
     const chainId = toChainId(event.chainId);
     const rewardPoolAddress = event.srcAddress.toString().toLowerCase() as Hex;
-    const initializedBlock = BigInt(event.block.number);
+    const blockNumber = BigInt(event.block.number);
 
-    const rewardPool = await initializeRewardPool({ context, chainId, rewardPoolAddress, initializedBlock });
+    const rewardPool = await initializeRewardPool({ context, chainId, rewardPoolAddress, blockNumber });
     if (!rewardPool) return;
 
     context.log.info('ClassicRewardPool initialized successfully', { rewardPoolAddress });
 });
 
-RewardPool.Transfer.handler(async ({ event, context }) => {
-    const chainId = toChainId(event.chainId);
-    const rewardPoolAddress = event.srcAddress.toString().toLowerCase() as Hex;
-
-    // Ensure that the reward pool is initialized first
-    const rewardPool = await initializeRewardPool({
-        context,
-        chainId,
-        rewardPoolAddress,
-        initializedBlock: BigInt(event.block.number),
-    });
-    if (!rewardPool) return;
-
-    const shareToken = await getTokenOrThrow({ context, id: rewardPool.shareToken_id });
-
-    await handleTokenTransfer({
-        context,
-        chainId,
-        token: shareToken,
-        senderAddress: event.params.from.toString().toLowerCase() as Hex,
-        receiverAddress: event.params.to.toString().toLowerCase() as Hex,
-        rawTransferAmount: event.params.value,
-        block: event.block,
-        transaction: event.transaction,
-    });
+RewardPool.Transfer.handler(async () => {
+    // No-op for new schema
 });
 
-RewardPool.NotifyReward.handler(async ({ event, context }) => {
-    const chainId = toChainId(event.chainId);
-    const rewardPoolAddress = event.srcAddress.toString().toLowerCase() as Hex;
-    const trxHash = event.transaction.hash.toString().toLowerCase() as Hex;
-    const logIndex = event.logIndex;
-
-    const rewardPool = await initializeRewardPool({
-        context,
-        chainId,
-        rewardPoolAddress,
-        initializedBlock: BigInt(event.block.number),
-    });
-    if (!rewardPool) return;
-
-    const [shareToken, rewardToken] = await Promise.all([
-        getTokenOrThrow({ context, id: rewardPool.shareToken_id }),
-        getTokenOrThrow({ context, id: rewardPool.underlyingToken_id }),
-    ]);
-
-    await createPoolRewardedEvent({
-        context,
-        chainId,
-        trxHash,
-        logIndex,
-        poolShareToken: shareToken,
-        rewardToken: rewardToken,
-        rewardVestingSeconds: event.params.duration,
-        rawRewardAmount: event.params.amount,
-        block: event.block,
-    });
+RewardPool.NotifyReward.handler(async () => {
+    // No-op for new schema
 });
 
 const initializeRewardPool = async ({
     context,
     chainId,
     rewardPoolAddress,
-    initializedBlock,
+    blockNumber,
 }: {
     context: HandlerContext;
     chainId: ChainId;
     rewardPoolAddress: Hex;
-    initializedBlock: bigint;
-}): Promise<RewardPool_t | null> => {
-    // Check if the reward pool already exists
-    const existingRewardPool = await getRewardPool(context, chainId, rewardPoolAddress);
-    if (existingRewardPool) {
-        return existingRewardPool;
+    blockNumber: bigint;
+}): Promise<BeefyRewardPool_t | null> => {
+    const existing = await getBeefyRewardPool(context, chainId, rewardPoolAddress);
+    if (existing) return existing;
+
+    context.log.info('Initializing BeefyRewardPool', { rewardPoolAddress, chainId });
+
+    // Find the parent vault from config
+    const configs = await context.effect(getBeefyVaultConfigForAddressEffect, {
+        chainId,
+        address: rewardPoolAddress,
+        blockNumber,
+    });
+
+    const vault = await getBeefyVault(context, chainId, configs.vault_address);
+    if (!vault) {
+        throw new Error('RewardPool vault not found');
     }
 
-    context.log.info('Initializing ClassicRewardPool', { rewardPoolAddress, chainId });
-
-    // Fetch underlying tokens using effect
-    const { shareTokenAddress, underlyingTokenAddress, blacklistStatus } = await context.effect(getRewardPoolTokens, {
+    // Fetch rcow token (staked token)
+    const { underlyingTokenAddress } = await context.effect(getRewardPoolTokens, {
         rewardPoolAddress,
         chainId,
     });
+    const rcowToken = await getOrCreateToken({ context, chainId, tokenAddress: underlyingTokenAddress });
 
-    if (blacklistStatus !== 'ok') {
-        logBlacklistStatus(context.log, blacklistStatus, 'RewardPool', {
-            contractAddress: rewardPoolAddress,
-            shareTokenAddress,
-            underlyingTokenAddress,
-        });
-        return null;
-    }
-
-    // Create tokens - share token is virtual for reward pool
-    const [shareToken, underlyingToken] = await Promise.all([
-        getOrCreateToken({
-            context,
-            chainId,
-            tokenAddress: shareTokenAddress,
-            virtual: false,
-        }),
-        getOrCreateToken({
-            context,
-            chainId,
-            tokenAddress: underlyingTokenAddress,
-            virtual: false,
-        }),
-    ]);
-
-    // Create reward pool entity
-    return await createRewardPool({
-        context,
-        chainId,
-        rewardPoolAddress,
-        shareToken,
-        underlyingToken,
-        initializedBlock,
-    });
+    return await createBeefyRewardPool({ context, chainId, address: rewardPoolAddress, vault, rcowToken });
 };
