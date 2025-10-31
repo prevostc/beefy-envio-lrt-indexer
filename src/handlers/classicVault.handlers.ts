@@ -1,4 +1,4 @@
-import { ClassicVault } from 'generated';
+import { BigDecimal, ClassicVault } from 'generated';
 import type { BeefyVault_t } from 'generated/src/db/Entities.gen';
 import type { HandlerContext } from 'generated/src/Types';
 import type { Hex } from 'viem';
@@ -6,10 +6,10 @@ import { getClassicVaultTokens } from '../effects/classicVault.effects';
 import { getBeefyVaultConfigForAddress } from '../effects/vaultConfig.effects';
 import { createBeefyVault, getBeefyVault } from '../entities/beefyVault.entity';
 import { getOrCreateInvestor } from '../entities/investor.entity';
-import { getOrCreateInvestorPosition } from '../entities/investorPosition.entity';
 import { getOrCreateToken } from '../entities/token.entity';
 import { type ChainId, toChainId } from '../lib/chain';
 import { interpretAsDecimal } from '../lib/decimal';
+import { updateInvestorPositionAndBreakdown } from '../lib/investorPositionBreakdown';
 
 ClassicVault.Initialized.handler(async ({ event, context }) => {
     const chainId = toChainId(event.chainId);
@@ -44,34 +44,34 @@ ClassicVault.Transfer.handler(async ({ event, context }) => {
     if (!sharesToken) return;
 
     const value = interpretAsDecimal(amount, sharesToken.decimals);
+    const blockNumber = BigInt(event.block.number);
+    const blockTimestamp = BigInt(event.block.timestamp);
 
     if (amount !== 0n && sender !== receiver) {
         if (sender !== ('0x0000000000000000000000000000000000000000' as Hex)) {
             const investor = await getOrCreateInvestor({ context, address: sender });
-            const pos = await getOrCreateInvestorPosition({
+            await updateInvestorPositionAndBreakdown({
                 context,
                 chainId,
-                vault,
                 investor,
-            });
-            context.InvestorPosition.set({
-                ...pos,
-                directSharesBalance: pos.directSharesBalance.minus(value),
-                totalSharesBalance: pos.totalSharesBalance.minus(value),
+                vault,
+                directSharesDiff: value.negated(),
+                indirectSharesDiff: new BigDecimal(0),
+                blockNumber,
+                blockTimestamp,
             });
         }
         if (receiver !== ('0x0000000000000000000000000000000000000000' as Hex)) {
             const investor = await getOrCreateInvestor({ context, address: receiver });
-            const pos = await getOrCreateInvestorPosition({
+            await updateInvestorPositionAndBreakdown({
                 context,
                 chainId,
-                vault,
                 investor,
-            });
-            context.InvestorPosition.set({
-                ...pos,
-                directSharesBalance: pos.directSharesBalance.plus(value),
-                totalSharesBalance: pos.totalSharesBalance.plus(value),
+                vault,
+                directSharesDiff: value,
+                indirectSharesDiff: new BigDecimal(0),
+                blockNumber,
+                blockTimestamp,
             });
         }
     }
@@ -118,7 +118,7 @@ const initializeClassicVault = async ({
         chainId,
         address: vaultAddress,
         sharesToken,
-        underlyingToken,
+        underlyingTokens: [underlyingToken],
         strategyAddress,
         vaultId,
         underlyingPlatform,

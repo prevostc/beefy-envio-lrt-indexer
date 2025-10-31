@@ -17,12 +17,15 @@ export const getVaultTvlBreakdownEffect = experimental_createEffect(
                 protocolType: S.string as unknown as S.Schema<BeefyProtocolType>,
             }),
         },
-        output: S.array(
-            S.schema({
-                tokenAddress: S.string as unknown as S.Schema<Hex>,
-                tokenBalance: S.bigint,
-            })
-        ),
+        output: S.schema({
+            vaultTotalSupply: S.bigint,
+            balances: S.array(
+                S.schema({
+                    tokenAddress: S.string as unknown as S.Schema<Hex>,
+                    tokenBalance: S.bigint,
+                })
+            ),
+        }),
         cache: true,
     },
     async ({ input, context }) => {
@@ -34,9 +37,12 @@ export const getVaultTvlBreakdownEffect = experimental_createEffect(
             address: vault.address,
         });
         const breakdown = await getVaultBreakdowns(client, blockNumber, vaultConfig);
-        return breakdown.balances.map((balance) => ({
-            tokenAddress: balance.tokenAddress,
-            tokenBalance: BigInt(balance.vaultBalance),
-        }));
+        return {
+            vaultTotalSupply: breakdown.vaultTotalSupply,
+            balances: breakdown.balances.map((balance) => ({
+                tokenAddress: balance.tokenAddress,
+                tokenBalance: BigInt(balance.vaultBalance),
+            })),
+        };
     }
 );

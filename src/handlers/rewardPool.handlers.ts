@@ -1,4 +1,4 @@
-import { RewardPool } from 'generated';
+import { BigDecimal, RewardPool } from 'generated';
 import type { BeefyRewardPool_t } from 'generated/src/db/Entities.gen';
 import type { HandlerContext } from 'generated/src/Types';
 import type { Hex } from 'viem';
@@ -7,10 +7,10 @@ import { getBeefyVaultConfigForAddress } from '../effects/vaultConfig.effects';
 import { createBeefyRewardPool, getBeefyRewardPool } from '../entities/beefyRewardPool.entity';
 import { getBeefyVault } from '../entities/beefyVault.entity';
 import { getOrCreateInvestor } from '../entities/investor.entity';
-import { getOrCreateInvestorPosition } from '../entities/investorPosition.entity';
 import { getOrCreateToken } from '../entities/token.entity';
 import { type ChainId, toChainId } from '../lib/chain';
 import { interpretAsDecimal } from '../lib/decimal';
+import { updateInvestorPositionAndBreakdown } from '../lib/investorPositionBreakdown';
 
 RewardPool.Initialized.handler(async ({ event, context }) => {
     const chainId = toChainId(event.chainId);
@@ -42,34 +42,34 @@ RewardPool.Transfer.handler(async ({ event, context }) => {
     if (!rcowToken) return;
 
     const value = interpretAsDecimal(amount, rcowToken.decimals);
+    const blockNumber = BigInt(event.block.number);
+    const blockTimestamp = BigInt(event.block.timestamp);
 
     if (amount !== 0n && sender !== receiver) {
         if (sender !== ('0x0000000000000000000000000000000000000000' as Hex)) {
             const investor = await getOrCreateInvestor({ context, address: sender });
-            const pos = await getOrCreateInvestorPosition({
+            await updateInvestorPositionAndBreakdown({
                 context,
                 chainId,
-                vault,
                 investor,
-            });
-            context.InvestorPosition.set({
-                ...pos,
-                rewardPoolSharesBalance: pos.rewardPoolSharesBalance.minus(value),
-                totalSharesBalance: pos.totalSharesBalance.minus(value),
+                vault,
+                directSharesDiff: new BigDecimal(0),
+                indirectSharesDiff: value.negated(),
+                blockNumber,
+                blockTimestamp,
             });
         }
         if (receiver !== ('0x0000000000000000000000000000000000000000' as Hex)) {
             const investor = await getOrCreateInvestor({ context, address: receiver });
-            const pos = await getOrCreateInvestorPosition({
+            await updateInvestorPositionAndBreakdown({
                 context,
                 chainId,
-                vault,
                 investor,
-            });
-            context.InvestorPosition.set({
-                ...pos,
-                rewardPoolSharesBalance: pos.rewardPoolSharesBalance.plus(value),
-                totalSharesBalance: pos.totalSharesBalance.plus(value),
+                vault,
+                directSharesDiff: new BigDecimal(0),
+                indirectSharesDiff: value,
+                blockNumber,
+                blockTimestamp,
             });
         }
     }

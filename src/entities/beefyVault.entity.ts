@@ -3,6 +3,7 @@ import type { BeefyStrategy_t, BeefyVault_t, Token_t } from 'generated/src/db/En
 import type { Hex } from 'viem';
 import type { ChainId } from '../lib/chain';
 import { InitializableStatus } from '../lib/initializableStatus';
+import { getOrCreateBeefyVaultUnderlyingToken } from './vaultToken.entity';
 
 export const beefyVaultId = ({ chainId, address }: { chainId: ChainId; address: Hex }) =>
     `${chainId}-${address.toLowerCase()}`;
@@ -17,7 +18,7 @@ export const createBeefyVault = async ({
     chainId,
     address,
     sharesToken,
-    underlyingToken,
+    underlyingTokens,
     strategyAddress,
     vaultId,
     underlyingPlatform,
@@ -28,7 +29,7 @@ export const createBeefyVault = async ({
     chainId: ChainId;
     address: Hex;
     sharesToken: Token_t;
-    underlyingToken: Token_t;
+    underlyingTokens: Token_t[];
     strategyAddress: Hex;
     vaultId: string;
     underlyingPlatform: string;
@@ -42,7 +43,6 @@ export const createBeefyVault = async ({
         chainId,
         address,
         sharesToken_id: sharesToken.id,
-        underlyingToken_id: underlyingToken.id,
         strategy_id: `${chainId}-${strategyAddress.toLowerCase()}`,
         initializableStatus: InitializableStatus.INITIALIZED,
         underlyingPlatform,
@@ -50,9 +50,15 @@ export const createBeefyVault = async ({
         lastBalanceBreakdownUpdateBlockNumber: initializedBlockNumber,
         lastBalanceBreakdownUpdateTimestamp: initializedTimestamp,
         sharesTokenTotalSupply: new BigDecimal(0),
+        breakdownTokensOrder: underlyingTokens.map((token) => token.id),
     } as unknown as BeefyVault_t;
 
     context.BeefyVault.set(vault);
+
+    // Create underlying token entities for all tokens
+    await Promise.all(
+        underlyingTokens.map((token) => getOrCreateBeefyVaultUnderlyingToken({ context, chainId, vault, token }))
+    );
 
     await createBeefyStrategy({ context, chainId, strategyAddress, vault });
 

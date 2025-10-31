@@ -59,11 +59,14 @@ type Token {
 
   ### references
 
-  "The vaults that hold this token as a sub-balance"
-  vaultBalanceBreakdowns: [VaultBalanceBreakdown!]! @derivedFrom(field: "token")
+  "The breakdown tokens that this token is used in"
+  breakdownTokensOf: [BeefyVaultBreakdownToken!]! @derivedFrom(field: "token")
 
-  "The investor position breakdown that hold this token"
-  investorPositionBalanceBreakdowns: [InvestorPositionBalanceBreakdown!]! @derivedFrom(field: "token")
+  "The underlying tokens that this token is used in"
+  underlyingTokensOf: [BeefyVaultUnderlyingToken!]! @derivedFrom(field: "token")
+
+  "The vaults that this token is the shares token of"
+  sharesTokenOf: [BeefyVault!]! @derivedFrom(field: "sharesToken")
 }
 
 """
@@ -83,7 +86,7 @@ enum InitializableStatus {
 """
 A Beefy vault
 """
-type BeefyVault @entity {
+type BeefyVault {
   "chainId + vault address"
   id: ID!
 
@@ -95,8 +98,13 @@ type BeefyVault @entity {
   "Moo token address"
   sharesToken: Token!
 
-  "Input lp token address"
-  underlyingTokens: [Token!]!
+  "Directly linked underlying tokens"
+  underlyingTokens: [BeefyVaultUnderlyingToken!]! @derivedFrom(field: "vault")
+
+  "Directly or Indirectly linked underlying tokens. This represents all the underlying tokens that have direct value."
+  breakdownTokens: [BeefyVaultBreakdownToken!]! @derivedFrom(field: "vault")
+  "Stable order list of breakdown token ids, used to sort the balance in breakdowns"
+  breakdownTokensOrder: [ID!]!
 
   "The vault's strategy"
   strategy: BeefyStrategy!
@@ -126,7 +134,35 @@ type BeefyVault @entity {
   positions: [InvestorPosition!]! @derivedFrom(field: "vault")
 
   "breakdown of the vault underlying token balance"
-  underlyingTokenBalanceBreakdown: [VaultBalanceBreakdown!]! @derivedFrom(field: "vault")
+  balanceBreakdown: [VaultBalanceBreakdown!]! @derivedFrom(field: "vault")
+}
+
+type BeefyVaultUnderlyingToken {
+  "chainId + vault address + underlying token address"
+  id: ID!
+
+  "chain id"
+  chainId: Int! @index
+
+  "The vault"
+  vault: BeefyVault! @index
+
+  "The underlying token"
+  token: Token! @index
+}
+
+type BeefyVaultBreakdownToken {
+  "chainId + vault address + breakdown token address"
+  id: ID!
+
+  "chain id"
+  chainId: Int! @index
+
+  "The vault"
+  vault: BeefyVault! @index
+
+  "The breakdown token"
+  token: Token! @index
 }
 
 """
@@ -190,16 +226,13 @@ type VaultBalanceBreakdown {
   "The vault this breakdown is for"
   vault: BeefyVault! @index
 
-  "Underlying tokens of the breakdown item at the time of the breakdown"
-  underlyingTokens: [Token!]!
-
   "Block number of the breakdown"
   blockNumber: BigInt! @index
 
   "Block timestamp of the breakdown"
   blockTimestamp: BigInt! @index
 
-  "Balances of the underlying tokens at the time of the breakdown, in the same order as the underlying tokens"
+  "Balances of the breakdown tokens at the time of the breakdown. Order is determined by the vault's breakdownTokensOrder"
   balances: [BigDecimal!]! @config(precision: 100, scale: 24)
 }
 
@@ -242,10 +275,7 @@ type InvestorPositionBalanceBreakdown {
   "The investor position"
   investorPosition: InvestorPosition! @index
 
-  "Underlying tokens of the breakdown item at the time of the breakdown"
-  underlyingTokens: [Token!]!
-
-  "Balances of the underlying tokens at the time of the breakdown, in the same order as the underlying tokens"
+  "Balances of the breakdown tokens at the time of the breakdown. Order is determined by the vault's breakdownTokensOrder"
   balances: [BigDecimal!]! @config(precision: 100, scale: 24)
 
   """
