@@ -54,132 +54,132 @@ networks:
       - name: RewardPool
         address: []
      
-  # - id: 8453 # base
-  #   start_block: 13929020
-  #   rpc: ${BASE_RPC_URL}
-  #   contracts:
-  #     - name: ClassicVault
-  #       address: 
-  #         - 0x47579C50c7AeDeA788D18927aed4c827Fe34996A # 13929020
-  #         - 0xc52393b27FeE4355Fe6a5DC92D25BC2Ed1B418Cb # 14883847
-  #     - name: ClmManager
-  #       address: []
-  #     - name: RewardPool
-  #       address: []
+  - id: 8453 # base
+    start_block: 13929020
+    rpc: ${BASE_RPC_URL}
+    contracts:
+      - name: ClassicVault
+        address: 
+          - 0x47579C50c7AeDeA788D18927aed4c827Fe34996A # 13929020
+          - 0xc52393b27FeE4355Fe6a5DC92D25BC2Ed1B418Cb # 14883847
+      - name: ClmManager
+        address: []
+      - name: RewardPool
+        address: []
 
-  # - id: 56 # bsc
-  #   start_block: 38435936
-  #   rpc: ${BSC_RPC_URL}
-  #   contracts:
-  #     - name: ClassicVault
-  #       address: 
-  #         - 0xcCcDB0F6eCcd5f231d4737A00C554322167d814B # 38435936
-  #     - name: ClmManager
-  #       address: []
-  #     - name: RewardPool
-  #       address: []
+  - id: 56 # bsc
+    start_block: 38435936
+    rpc: ${BSC_RPC_URL}
+    contracts:
+      - name: ClassicVault
+        address: 
+          - 0xcCcDB0F6eCcd5f231d4737A00C554322167d814B # 38435936
+      - name: ClmManager
+        address: []
+      - name: RewardPool
+        address: []
      
-  # - id: 1 # ethereum
-  #   start_block: 15891216
-  #   rpc: ${ETHEREUM_RPC_URL}
-  #   contracts:
-  #     - name: ClassicVault
-  #       address: 
-  #         - 0x1153211f7E810C73cC45eE09FF9A0742fBB6b467 # 19205552
-  #         - 0x5dA90BA82bED0AB701E6762D2bF44E08634d9776 # 19383462
-  #     - name: ClmManager
-  #       address: []
-  #     - name: RewardPool
-  #       address: []
+  - id: 1 # ethereum
+    start_block: 15891216
+    rpc: ${ETHEREUM_RPC_URL}
+    contracts:
+      - name: ClassicVault
+        address: 
+          - 0x1153211f7E810C73cC45eE09FF9A0742fBB6b467 # 19205552
+          - 0x5dA90BA82bED0AB701E6762D2bF44E08634d9776 # 19383462
+      - name: ClmManager
+        address: []
+      - name: RewardPool
+        address: []
 
-  # - id: 999 # hyperevm
-  #   start_block: 4883535
-  #   # force rpc usage over hypersync because hyperevm used an existing chainid
-  #   # that was already used by another chain (wanchain)
-  #   rpc_config:
-  #     url: ${HYPEREVM_RPC_URL} 
-  #     initial_block_interval: 250 # Initial number of blocks to fetch in each request
-  #     backoff_multiplicative: 0.999999 # Factor to scale back block request size after errors
-  #     acceleration_additive: 0 # How many more blocks to request when successful
-  #     interval_ceiling: 250 # Maximum blocks to request in a single call
-  #     backoff_millis: 5000 # Milliseconds to wait after an error
-  #     query_timeout_millis: 60000 # Milliseconds before timing out a request
-  #   contracts:
-  #     - name: ClassicVault
-  #       address: []
-  #     - name: ClmManager
-  #       address: 
-  #         - 0x98312D3c6D900678Bf0667A45b2aADaD92045D78 # ???
-  #         - 0x76C8DaE55CD103B9865c6f056C8da915C8a98c4C
-  #         - 0xfe4e34F6EdBA9B2Fba06014046690Cd558aca0fE
-  #         - 0x2084839396c56BEf5A25360B0000aB40103C9Db9
-  #         - 0xCbdBa88e24e2455b562683f8170387b264fc08Fa
-  #         - 0xdC9d2c590145f3a006FE899D175F93E97dC3a516
-  #     - name: RewardPool
-  #       address: 
-  #         - 0x325461FFC41246817cdB0e930B405C299Fc5Fd42
-  #         - 0x5D9724177b596CBbABaFc6dB5CF09650d18c9cF1
-  #         - 0x9C0187d188C412266130D0Ba1D17d4977aCc7179
-  #         - 0xb4E9Aea85A2e6037E2C3c133493290915977eaE8
-  #         - 0x03c27F725DCfdD00E040Ecb7Fb89c24239Ad06b0
-  #         - 0xDd676F923F8a928d97F58F5ADE22c3512d2cFddb
+  - id: 999 # hyperevm
+    start_block: 4883535
+    # force rpc usage over hypersync because hyperevm used an existing chainid
+    # that was already used by another chain (wanchain)
+    rpc_config:
+      url: ${HYPEREVM_RPC_URL} 
+      initial_block_interval: 250 # Initial number of blocks to fetch in each request
+      backoff_multiplicative: 0.999999 # Factor to scale back block request size after errors
+      acceleration_additive: 0 # How many more blocks to request when successful
+      interval_ceiling: 250 # Maximum blocks to request in a single call
+      backoff_millis: 5000 # Milliseconds to wait after an error
+      query_timeout_millis: 60000 # Milliseconds before timing out a request
+    contracts:
+      - name: ClassicVault
+        address: []
+      - name: ClmManager
+        address: 
+          - 0x98312D3c6D900678Bf0667A45b2aADaD92045D78 # ???
+          - 0x76C8DaE55CD103B9865c6f056C8da915C8a98c4C
+          - 0xfe4e34F6EdBA9B2Fba06014046690Cd558aca0fE
+          - 0x2084839396c56BEf5A25360B0000aB40103C9Db9
+          - 0xCbdBa88e24e2455b562683f8170387b264fc08Fa
+          - 0xdC9d2c590145f3a006FE899D175F93E97dC3a516
+      - name: RewardPool
+        address: 
+          - 0x325461FFC41246817cdB0e930B405C299Fc5Fd42
+          - 0x5D9724177b596CBbABaFc6dB5CF09650d18c9cF1
+          - 0x9C0187d188C412266130D0Ba1D17d4977aCc7179
+          - 0xb4E9Aea85A2e6037E2C3c133493290915977eaE8
+          - 0x03c27F725DCfdD00E040Ecb7Fb89c24239Ad06b0
+          - 0xDd676F923F8a928d97F58F5ADE22c3512d2cFddb
 
-  # - id: 59144 # linea
-  #   start_block: 4231522
-  #   rpc: ${LINEA_RPC_URL}
-  #   contracts:
-  #     - name: ClassicVault
-  #       address: 
-  #         - 0xb9A23E2569C262a92635D825142f310BEAfB0Be0 # 4231522
-  #         - 0x4d13b56f48A6aDD1e59d03735BE79D10e89Cd824 # 7605132
-  #     - name: ClmManager
-  #       address: []
-  #     - name: RewardPool
-  #       address: 
-  #         - 0x818CFe11Df8fD790c6CAC127A247bb4439089efa
+  - id: 59144 # linea
+    start_block: 4231522
+    rpc: ${LINEA_RPC_URL}
+    contracts:
+      - name: ClassicVault
+        address: 
+          - 0xb9A23E2569C262a92635D825142f310BEAfB0Be0 # 4231522
+          - 0x4d13b56f48A6aDD1e59d03735BE79D10e89Cd824 # 7605132
+      - name: ClmManager
+        address: []
+      - name: RewardPool
+        address: 
+          - 0x818CFe11Df8fD790c6CAC127A247bb4439089efa
 
-  # - id: 34443 # mode
-  #   start_block: 8148508
-  #   rpc: ${MODE_RPC_URL}
-  #   contracts:
-  #     - name: ClassicVault
-  #       address: 
-  #         - 0x6Dd2abBBbbf494dd2454aEd67880B9533E2b3DA1 # 8148508
-  #     - name: ClmManager
-  #       address: []
-  #     - name: RewardPool
-  #       address: []
+  - id: 34443 # mode
+    start_block: 8148508
+    rpc: ${MODE_RPC_URL}
+    contracts:
+      - name: ClassicVault
+        address: 
+          - 0x6Dd2abBBbbf494dd2454aEd67880B9533E2b3DA1 # 8148508
+      - name: ClmManager
+        address: []
+      - name: RewardPool
+        address: []
  
-  # - id: 10 # optimism
-  #   start_block: 123079790
-  #   rpc: ${OPTIMISM_RPC_URL}
-  #   contracts:
-  #     - name: ClassicVault
-  #       address: 
-  #         - 0xCF6fC7C5b95caC374400c16CBecd24CBa0cfeAD6 # 123079790
-  #     - name: ClmManager
-  #       address: []
-  #     - name: RewardPool
-  #       address: []
+  - id: 10 # optimism
+    start_block: 123079790
+    rpc: ${OPTIMISM_RPC_URL}
+    contracts:
+      - name: ClassicVault
+        address: 
+          - 0xCF6fC7C5b95caC374400c16CBecd24CBa0cfeAD6 # 123079790
+      - name: ClmManager
+        address: []
+      - name: RewardPool
+        address: []
 
-  # - id: 146 # sonic
-  #   start_block: 4412635
-  #   rpc: ${SONIC_RPC_URL}
-  #   contracts:
-  #     - name: ClassicVault
-  #       address: 
-  #         - 0x24c8D7Dc7D1d2dc0e6f6AE97345c04450a174782 # 29719844
-  #         - 0x392Ea759ad696004e5A8f1Ece45CAc99FAc45F4F # 29725181
-  #         - 0xfDd63AD264A06c3C5b515348BcF692837e841091 # 29717523
-  #         - 0xdb6E5dC4C6748EcECb97b565F6C074f24384fD07 # 4412635
-  #         - 0xB5c0570F781BDfde5ADff69866fDa932df855a14 # 23495995
-  #         - 0x0aD8162B686af063073EABbEA9bC6FdA2D8184A4 # 6547652
-  #         - 0x43026d483f42fB35efe03c20B251142D022783f2 # 5241902
-  #         - 0x5D9e8B588F1D9e28ea1963681180d8b5938D26BA # 5684471
-  #     - name: ClmManager
-  #       address: []
-  #     - name: RewardPool
-  #       address: 
-  #         - 0x65E44AD1291757C79E4760596F65002a4C42B7b1
-  #         - 0x1eB18145248EDF9b077e19584c7a93D61490422E
-  #         - 0x8b8F62E4239eb61d53afb07eA7789Cd6b1b7b6a1
+  - id: 146 # sonic
+    start_block: 4412635
+    rpc: ${SONIC_RPC_URL}
+    contracts:
+      - name: ClassicVault
+        address: 
+          - 0x24c8D7Dc7D1d2dc0e6f6AE97345c04450a174782 # 29719844
+          - 0x392Ea759ad696004e5A8f1Ece45CAc99FAc45F4F # 29725181
+          - 0xfDd63AD264A06c3C5b515348BcF692837e841091 # 29717523
+          - 0xdb6E5dC4C6748EcECb97b565F6C074f24384fD07 # 4412635
+          - 0xB5c0570F781BDfde5ADff69866fDa932df855a14 # 23495995
+          - 0x0aD8162B686af063073EABbEA9bC6FdA2D8184A4 # 6547652
+          - 0x43026d483f42fB35efe03c20B251142D022783f2 # 5241902
+          - 0x5D9e8B588F1D9e28ea1963681180d8b5938D26BA # 5684471
+      - name: ClmManager
+        address: []
+      - name: RewardPool
+        address: 
+          - 0x65E44AD1291757C79E4760596F65002a4C42B7b1
+          - 0x1eB18145248EDF9b077e19584c7a93D61490422E
+          - 0x8b8F62E4239eb61d53afb07eA7789Cd6b1b7b6a1

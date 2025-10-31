@@ -27,7 +27,7 @@
     "blockchain-addressbook": "0.54.93",
     "envio": "2.31.1",
     "remeda": "^2.32.0",
-    "viem": "2.37.9"
+    "viem": "2.38.5"
   },
   "optionalDependencies": {
     "generated": "./generated"
