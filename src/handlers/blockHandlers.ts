@@ -74,6 +74,8 @@ R.pipe(
                 chainId,
             });
 
+            if (context.isPreload) return;
+
             // Update breakdown for each vault and all its investor positions
             await Promise.all(
                 vaults.map(async (vault) => {
