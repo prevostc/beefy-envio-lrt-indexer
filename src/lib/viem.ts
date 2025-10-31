@@ -38,7 +38,7 @@ import {
     unichain,
     zksync,
 } from 'viem/chains';
-import type { ChainId } from './chain';
+import type { ChainId, MapByChainId } from './chain';
 import { config } from './config';
 
 const emerald = defineChain({
@@ -109,7 +109,7 @@ const hyperevm = defineChain({
     },
 });
 
-const chainMap: Record<ChainId, ViemChain> = {
+const chainMap: MapByChainId<ViemChain> = {
     1313161554: aurora,
     42161: arbitrum,
     43114: avalanche,
