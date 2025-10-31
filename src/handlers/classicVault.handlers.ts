@@ -4,12 +4,15 @@ import type { HandlerContext } from 'generated/src/Types';
 import type { Hex } from 'viem';
 import { getClassicVaultTokens } from '../effects/classicVault.effects';
 import { getBeefyVaultConfigForAddress } from '../effects/vaultConfig.effects';
-import { createBeefyStrategy, createBeefyVault, getBeefyVault } from '../entities/beefyVault.entity';
+import { createBeefyStrategy, createBeefyVault, getBeefyVault, updateBeefyVault } from '../entities/beefyVault.entity';
 import { getOrCreateInvestor } from '../entities/investor.entity';
-import { getOrCreateToken } from '../entities/token.entity';
+import { getOrCreateToken, getToken } from '../entities/token.entity';
 import { type ChainId, toChainId } from '../lib/chain';
 import { interpretAsDecimal } from '../lib/decimal';
 import { updateInvestorPositionAndBreakdown } from '../lib/investorPositionBreakdown';
+
+// Import block handlers to ensure they're registered
+import './blockHandlers';
 
 ClassicVault.Initialized.handler(async ({ event, context }) => {
     const chainId = toChainId(event.chainId);
@@ -40,7 +43,7 @@ ClassicVault.Transfer.handler(async ({ event, context }) => {
     const receiver = event.params.to.toString().toLowerCase() as Hex;
     const amount = event.params.value;
 
-    const sharesToken = await context.Token.get(vault.sharesToken_id);
+    const sharesToken = await getToken({ context, id: vault.sharesToken_id });
     if (!sharesToken) return;
 
     const value = interpretAsDecimal(amount, sharesToken.decimals);
@@ -104,7 +107,7 @@ ClassicVault.UpgradeStrat.handler(async ({ event, context }) => {
         strategy_id: strategy.id,
     };
 
-    context.BeefyVault.set(updatedVault);
+    await updateBeefyVault({ context, vault: updatedVault });
 });
 
 const initializeClassicVault = async ({

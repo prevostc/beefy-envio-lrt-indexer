@@ -36,3 +36,29 @@ export const getOrCreateInvestorPosition = async ({
         totalSharesBalance: new BigDecimal(0),
     });
 };
+
+/**
+ * Get all investor positions for a vault
+ */
+export const getAllInvestorPositionsForVault = async ({
+    context,
+    vault,
+}: {
+    context: HandlerContext;
+    vault: BeefyVault_t;
+}): Promise<InvestorPosition_t[]> => {
+    return await context.InvestorPosition.getWhere.vault_id.eq(vault.id);
+};
+
+/**
+ * Update investor position entity
+ */
+export const updateInvestorPosition = async ({
+    context,
+    investorPosition,
+}: {
+    context: HandlerContext;
+    investorPosition: InvestorPosition_t;
+}): Promise<void> => {
+    context.InvestorPosition.set(investorPosition);
+};

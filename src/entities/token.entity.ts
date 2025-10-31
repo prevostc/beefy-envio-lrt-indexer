@@ -37,6 +37,14 @@ export const getOrCreateToken = async ({
     });
 };
 
+/**
+ * Get token by ID, returns null if not found
+ */
+export const getToken = async ({ context, id }: { context: HandlerContext; id: string }): Promise<Token_t | null> => {
+    const token = await context.Token.get(id);
+    return token ?? null;
+};
+
 export const getTokenOrThrow = async ({ context, id }: { context: HandlerContext; id: string }): Promise<Token_t> => {
     const token = await context.Token.get(id);
     if (!token) {

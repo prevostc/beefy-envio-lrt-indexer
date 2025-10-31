@@ -6,7 +6,7 @@ import { getClmManagerTokens } from '../effects/clmManager.effects';
 import { getBeefyVaultConfigForAddress } from '../effects/vaultConfig.effects';
 import { createBeefyVault, getBeefyVault } from '../entities/beefyVault.entity';
 import { getOrCreateInvestor } from '../entities/investor.entity';
-import { getOrCreateToken } from '../entities/token.entity';
+import { getOrCreateToken, getToken } from '../entities/token.entity';
 import { type ChainId, toChainId } from '../lib/chain';
 import { interpretAsDecimal } from '../lib/decimal';
 import { updateInvestorPositionAndBreakdown } from '../lib/investorPositionBreakdown';
@@ -40,7 +40,7 @@ ClmManager.Transfer.handler(async ({ event, context }) => {
     const receiver = event.params.to.toString().toLowerCase() as Hex;
     const amount = event.params.value;
 
-    const sharesToken = await context.Token.get(vault.sharesToken_id);
+    const sharesToken = await getToken({ context, id: vault.sharesToken_id });
     if (!sharesToken) return;
 
     const value = interpretAsDecimal(amount, sharesToken.decimals);

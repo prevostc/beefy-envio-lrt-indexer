@@ -13,6 +13,33 @@ export const getBeefyVault = async (context: HandlerContext, chainId: ChainId, a
     return await context.BeefyVault.get(id);
 };
 
+/**
+ * Get vault by ID, returns null if not found
+ */
+export const getBeefyVaultById = async ({
+    context,
+    id,
+}: {
+    context: HandlerContext;
+    id: string;
+}): Promise<BeefyVault_t | null> => {
+    const vault = await context.BeefyVault.get(id);
+    return vault ?? null;
+};
+
+/**
+ * Update vault entity
+ */
+export const updateBeefyVault = async ({
+    context,
+    vault,
+}: {
+    context: HandlerContext;
+    vault: BeefyVault_t;
+}): Promise<void> => {
+    context.BeefyVault.set(vault);
+};
+
 export const createBeefyVault = async ({
     context,
     chainId,
@@ -63,6 +90,19 @@ export const createBeefyVault = async ({
     await createBeefyStrategy({ context, chainId, strategyAddress, vault });
 
     return vault;
+};
+
+/**
+ * Get all vaults for a chain
+ */
+export const getAllBeefyVaultsForChain = async ({
+    context,
+    chainId,
+}: {
+    context: HandlerContext;
+    chainId: ChainId;
+}): Promise<BeefyVault_t[]> => {
+    return await context.BeefyVault.getWhere.chainId.eq(chainId);
 };
 
 export const getBeefyStrategyId = ({ chainId, address }: { chainId: ChainId; address: Hex }) =>

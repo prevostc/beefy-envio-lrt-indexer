@@ -5,9 +5,9 @@ import type { Hex } from 'viem';
 import { getRewardPoolTokens } from '../effects/rewardPool.effects';
 import { getBeefyVaultConfigForAddress } from '../effects/vaultConfig.effects';
 import { createBeefyRewardPool, getBeefyRewardPool } from '../entities/beefyRewardPool.entity';
-import { getBeefyVault } from '../entities/beefyVault.entity';
+import { getBeefyVault, getBeefyVaultById } from '../entities/beefyVault.entity';
 import { getOrCreateInvestor } from '../entities/investor.entity';
-import { getOrCreateToken } from '../entities/token.entity';
+import { getOrCreateToken, getToken } from '../entities/token.entity';
 import { type ChainId, toChainId } from '../lib/chain';
 import { interpretAsDecimal } from '../lib/decimal';
 import { updateInvestorPositionAndBreakdown } from '../lib/investorPositionBreakdown';
@@ -29,7 +29,7 @@ RewardPool.Transfer.handler(async ({ event, context }) => {
     const rewardPool = await initializeRewardPool({ context, chainId, rewardPoolAddress });
     if (!rewardPool) return;
 
-    const vault = await context.BeefyVault.get(rewardPool.vault_id);
+    const vault = await getBeefyVaultById({ context, id: rewardPool.vault_id });
     if (!vault) {
         throw new Error('RewardPool vault not found');
     }
@@ -38,7 +38,7 @@ RewardPool.Transfer.handler(async ({ event, context }) => {
     const receiver = event.params.to.toString().toLowerCase() as Hex;
     const amount = event.params.value;
 
-    const rcowToken = await context.Token.get(rewardPool.rcowToken_id);
+    const rcowToken = await getToken({ context, id: rewardPool.rcowToken_id });
     if (!rcowToken) return;
 
     const value = interpretAsDecimal(amount, rcowToken.decimals);
