@@ -34,7 +34,7 @@ export const getVaultTvlBreakdownEffect = experimental_createEffect(
         const vaultConfig = await getBeefyVaultConfigForAddress({
             context,
             chainId,
-            address: vault.address,
+            vaultOrRewardPoolAddress: vault.address,
         });
         const breakdown = await getVaultBreakdowns(client, blockNumber, vaultConfig);
         return {

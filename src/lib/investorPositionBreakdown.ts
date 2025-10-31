@@ -60,7 +60,7 @@ export const updateInvestorPositionAndBreakdown = async ({
     const vaultConfig = await getBeefyVaultConfigForAddress({
         context,
         chainId,
-        address: vault.address as Hex,
+        vaultOrRewardPoolAddress: vault.address,
     });
 
     // Fetch vault balance breakdown

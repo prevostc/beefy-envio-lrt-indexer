@@ -110,7 +110,7 @@ const initializeClmManager = async ({
     const vaultConfig = await getBeefyVaultConfigForAddress({
         context,
         chainId,
-        address: vaultAddress,
+        vaultOrRewardPoolAddress: vaultAddress,
     });
     const vaultId = vaultConfig ? vaultConfig.id : `${chainId}:${vaultAddress}`;
     const underlyingPlatform = vaultConfig ? vaultConfig.platformId : 'unknown';

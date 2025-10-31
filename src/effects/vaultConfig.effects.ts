@@ -26,19 +26,24 @@ const getBeefyVaultConfigsEffect = experimental_createEffect(
 export const getBeefyVaultConfigForAddress = async ({
     context,
     chainId,
-    address,
+    vaultOrRewardPoolAddress: addressInput,
 }: {
     context: HandlerContext | EffectContext;
     chainId: ChainId;
-    address: Hex;
+    vaultOrRewardPoolAddress: string;
 }) => {
     const rawConfigs = await context.effect(getBeefyVaultConfigsEffect, {
         chainId,
         cacheBuster: BigInt(Math.floor(Date.now() / (1000 * 60 * 60))),
     });
 
+    const address = addressInput.toLowerCase() as Hex;
     const configs = JSON.parse(rawConfigs) as BeefyVault[];
-    const found = configs.find((v) => v.vault_address.toLowerCase() === (address as Hex).toLowerCase());
+    const found = configs.find(
+        (v) =>
+            v.vault_address.toLowerCase() === address ||
+            v.reward_pools?.some((rp) => rp.reward_pool_address.toLowerCase() === address)
+    );
 
     if (!found) {
         context.log.error('Vault config not found', { chainId, address });

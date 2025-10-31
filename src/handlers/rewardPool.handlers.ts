@@ -93,7 +93,7 @@ const initializeRewardPool = async ({
     const vaultConfig = await getBeefyVaultConfigForAddress({
         context,
         chainId,
-        address: rewardPoolAddress,
+        vaultOrRewardPoolAddress: rewardPoolAddress,
     });
 
     const vault = await getBeefyVault(context, chainId, vaultConfig.vault_address);
