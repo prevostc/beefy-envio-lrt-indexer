@@ -75,10 +75,6 @@ RewardPool.Transfer.handler(async ({ event, context }) => {
     }
 });
 
-RewardPool.NotifyReward.handler(async () => {
-    // No-op for new schema
-});
-
 const initializeRewardPool = async ({
     context,
     chainId,

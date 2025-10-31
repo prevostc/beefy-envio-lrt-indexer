@@ -4,7 +4,7 @@ import type { HandlerContext } from 'generated/src/Types';
 import type { Hex } from 'viem';
 import { getClassicVaultTokens } from '../effects/classicVault.effects';
 import { getBeefyVaultConfigForAddress } from '../effects/vaultConfig.effects';
-import { createBeefyVault, getBeefyVault } from '../entities/beefyVault.entity';
+import { createBeefyStrategy, createBeefyVault, getBeefyVault } from '../entities/beefyVault.entity';
 import { getOrCreateInvestor } from '../entities/investor.entity';
 import { getOrCreateToken } from '../entities/token.entity';
 import { type ChainId, toChainId } from '../lib/chain';
@@ -75,6 +75,36 @@ ClassicVault.Transfer.handler(async ({ event, context }) => {
             });
         }
     }
+});
+
+ClassicVault.UpgradeStrat.handler(async ({ event, context }) => {
+    const chainId = toChainId(event.chainId);
+    const vaultAddress = event.srcAddress.toString().toLowerCase() as Hex;
+    const newStrategyAddress = event.params.implementation.toString().toLowerCase() as Hex;
+
+    const vault = await getBeefyVault(context, chainId, vaultAddress);
+    if (!vault) {
+        context.log.warn('UpgradeStrat: Vault not found, skipping', { vaultAddress, chainId });
+        return;
+    }
+
+    context.log.info('Upgrading strategy for vault', { vaultAddress, chainId, newStrategyAddress });
+
+    // Create or update the strategy entity
+    const strategy = await createBeefyStrategy({
+        context,
+        chainId,
+        strategyAddress: newStrategyAddress,
+        vault,
+    });
+
+    // Update the vault's strategy reference
+    const updatedVault: BeefyVault_t = {
+        ...vault,
+        strategy_id: strategy.id,
+    };
+
+    context.BeefyVault.set(updatedVault);
 });
 
 const initializeClassicVault = async ({
