@@ -6,8 +6,11 @@ import { getRewardPoolTokens } from '../effects/rewardPool.effects';
 import { getBeefyVaultConfigForAddress } from '../effects/vaultConfig.effects';
 import { createBeefyRewardPool, getBeefyRewardPool } from '../entities/beefyRewardPool.entity';
 import { getBeefyVault } from '../entities/beefyVault.entity';
+import { getOrCreateInvestor } from '../entities/investor.entity';
+import { getOrCreateInvestorPosition } from '../entities/investorPosition.entity';
 import { getOrCreateToken } from '../entities/token.entity';
 import { type ChainId, toChainId } from '../lib/chain';
+import { interpretAsDecimal } from '../lib/decimal';
 
 RewardPool.Initialized.handler(async ({ event, context }) => {
     const chainId = toChainId(event.chainId);
@@ -19,8 +22,57 @@ RewardPool.Initialized.handler(async ({ event, context }) => {
     context.log.info('ClassicRewardPool initialized successfully', { rewardPoolAddress });
 });
 
-RewardPool.Transfer.handler(async () => {
-    // No-op for new schema
+RewardPool.Transfer.handler(async ({ event, context }) => {
+    const chainId = toChainId(event.chainId);
+    const rewardPoolAddress = event.srcAddress.toString().toLowerCase() as Hex;
+
+    const rewardPool = await initializeRewardPool({ context, chainId, rewardPoolAddress });
+    if (!rewardPool) return;
+
+    const vault = await context.BeefyVault.get(rewardPool.vault_id);
+    if (!vault) {
+        throw new Error('RewardPool vault not found');
+    }
+
+    const sender = event.params.from.toString().toLowerCase() as Hex;
+    const receiver = event.params.to.toString().toLowerCase() as Hex;
+    const amount = event.params.value;
+
+    const rcowToken = await context.Token.get(rewardPool.rcowToken_id);
+    if (!rcowToken) return;
+
+    const value = interpretAsDecimal(amount, rcowToken.decimals);
+
+    if (amount !== 0n && sender !== receiver) {
+        if (sender !== ('0x0000000000000000000000000000000000000000' as Hex)) {
+            const investor = await getOrCreateInvestor({ context, address: sender });
+            const pos = await getOrCreateInvestorPosition({
+                context,
+                chainId,
+                vault,
+                investor,
+            });
+            context.InvestorPosition.set({
+                ...pos,
+                rewardPoolSharesBalance: pos.rewardPoolSharesBalance.minus(value),
+                totalSharesBalance: pos.totalSharesBalance.minus(value),
+            });
+        }
+        if (receiver !== ('0x0000000000000000000000000000000000000000' as Hex)) {
+            const investor = await getOrCreateInvestor({ context, address: receiver });
+            const pos = await getOrCreateInvestorPosition({
+                context,
+                chainId,
+                vault,
+                investor,
+            });
+            context.InvestorPosition.set({
+                ...pos,
+                rewardPoolSharesBalance: pos.rewardPoolSharesBalance.plus(value),
+                totalSharesBalance: pos.totalSharesBalance.plus(value),
+            });
+        }
+    }
 });
 
 RewardPool.NotifyReward.handler(async () => {

@@ -1,4 +1,4 @@
-import { BigDecimal, type handlerContext as HandlerContext } from 'generated';
+import type { handlerContext as HandlerContext } from 'generated';
 import type { Token_t } from 'generated/src/db/Entities.gen';
 import type { Hex } from 'viem';
 import { getTokenMetadataEffect } from '../effects/token.effects';
@@ -34,7 +34,6 @@ export const getOrCreateToken = async ({
         name: tokenMetadata.name,
         symbol: tokenMetadata.symbol,
         decimals: tokenMetadata.decimals,
-        totalSupply: new BigDecimal(0),
     });
 };
 

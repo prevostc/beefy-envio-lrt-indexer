@@ -1,6 +1,5 @@
 import { BigDecimal, type handlerContext as HandlerContext } from 'generated';
 import type { BeefyVault_t, Investor_t, InvestorPosition_t } from 'generated/src/db/Entities.gen';
-import type { Hex } from 'viem';
 import type { ChainId } from '../lib/chain';
 
 export const investorPositionId = ({
@@ -23,8 +22,6 @@ export const getOrCreateInvestorPosition = async ({
     chainId: ChainId;
     vault: BeefyVault_t;
     investor: Investor_t;
-    vaultAddress: Hex;
-    investorAddress: Hex;
 }): Promise<InvestorPosition_t> => {
     const id = investorPositionId({ chainId, vault, investor });
     const existing = await context.InvestorPosition.get(id);
@@ -34,6 +31,8 @@ export const getOrCreateInvestorPosition = async ({
         chainId,
         investor_id: investor.id,
         vault_id: vault.id,
-        sharesBalance: new BigDecimal(0),
+        directSharesBalance: new BigDecimal(0),
+        rewardPoolSharesBalance: new BigDecimal(0),
+        totalSharesBalance: new BigDecimal(0),
     });
 };

@@ -57,11 +57,6 @@ type Token {
   "The number of decimals the token uses"
   decimals: Int!
 
-  ### metrics
-
-  "The total supply of the token"
-  totalSupply: BigDecimal! @config(precision: 100, scale: 24)
-
   ### references
 
   "The vaults that hold this token as a sub-balance"
@@ -101,7 +96,7 @@ type BeefyVault @entity {
   sharesToken: Token!
 
   "Input lp token address"
-  underlyingToken: Token!
+  underlyingTokens: [Token!]!
 
   "The vault's strategy"
   strategy: BeefyStrategy!
@@ -195,8 +190,8 @@ type VaultBalanceBreakdown {
   "The vault this breakdown is for"
   vault: BeefyVault! @index
 
-  "Token address of the breakdown item"
-  token: Token! @index
+  "Underlying tokens of the breakdown item at the time of the breakdown"
+  underlyingTokens: [Token!]!
 
   "Block number of the breakdown"
   blockNumber: BigInt! @index
@@ -204,8 +199,8 @@ type VaultBalanceBreakdown {
   "Block timestamp of the breakdown"
   blockTimestamp: BigInt! @index
 
-  "Balance of the breakdown item"
-  balance: BigDecimal! @config(precision: 100, scale: 24)
+  "Balances of the underlying tokens at the time of the breakdown, in the same order as the underlying tokens"
+  balances: [BigDecimal!]! @config(precision: 100, scale: 24)
 }
 
 ###################################
@@ -225,8 +220,13 @@ type InvestorPosition {
   "The vault"
   vault: BeefyVault! @index
 
-  "Amount of shares"
-  sharesBalance: BigDecimal! @config(precision: 100, scale: 24)
+  "Amount of shares directly held by the investor"
+  directSharesBalance: BigDecimal! @config(precision: 100, scale: 24)
+  "Amount of shares held by the investor in reward pools"
+  rewardPoolSharesBalance: BigDecimal! @config(precision: 100, scale: 24)
+
+  "Total amount of shares held by the investor"
+  totalSharesBalance: BigDecimal! @config(precision: 100, scale: 24)
 
   "Breakdown of the investor position balance"
   balanceBreakdown: [InvestorPositionBalanceBreakdown!]! @derivedFrom(field: "investorPosition")
@@ -242,11 +242,11 @@ type InvestorPositionBalanceBreakdown {
   "The investor position"
   investorPosition: InvestorPosition! @index
 
-  "The token"
-  token: Token! @index
+  "Underlying tokens of the breakdown item at the time of the breakdown"
+  underlyingTokens: [Token!]!
 
-  "Balance of the breakdown item"
-  balance: BigDecimal! @config(precision: 100, scale: 24)
+  "Balances of the underlying tokens at the time of the breakdown, in the same order as the underlying tokens"
+  balances: [BigDecimal!]! @config(precision: 100, scale: 24)
 
   """
   Time weighted balance UP UNTIL the last time we updated the time weighted balance.

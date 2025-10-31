@@ -53,10 +53,12 @@ ClassicVault.Transfer.handler(async ({ event, context }) => {
                 chainId,
                 vault,
                 investor,
-                vaultAddress,
-                investorAddress: sender,
             });
-            context.InvestorPosition.set({ ...pos, sharesBalance: pos.sharesBalance.minus(value) });
+            context.InvestorPosition.set({
+                ...pos,
+                directSharesBalance: pos.directSharesBalance.minus(value),
+                totalSharesBalance: pos.totalSharesBalance.minus(value),
+            });
         }
         if (receiver !== ('0x0000000000000000000000000000000000000000' as Hex)) {
             const investor = await getOrCreateInvestor({ context, address: receiver });
@@ -65,10 +67,12 @@ ClassicVault.Transfer.handler(async ({ event, context }) => {
                 chainId,
                 vault,
                 investor,
-                vaultAddress,
-                investorAddress: receiver,
             });
-            context.InvestorPosition.set({ ...pos, sharesBalance: pos.sharesBalance.plus(value) });
+            context.InvestorPosition.set({
+                ...pos,
+                directSharesBalance: pos.directSharesBalance.plus(value),
+                totalSharesBalance: pos.totalSharesBalance.plus(value),
+            });
         }
     }
 });
