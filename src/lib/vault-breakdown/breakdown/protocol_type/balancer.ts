@@ -1,4 +1,4 @@
-import { erc20Abi, getContract, type Hex } from 'viem';
+import { erc20Abi, getAddress, getContract, type Hex } from 'viem';
 import type { BeefyViemClient } from '../../../viem';
 import { BalancerPoolAbi } from '../../abi/BalancerPool';
 import { BalancerVaultAbi } from '../../abi/BalancerVault';
@@ -12,26 +12,40 @@ export const getBalancerAuraVaultBreakdown = async (
     blockNumber: bigint,
     vault: BeefyVault
 ): Promise<BeefyVaultBreakdown> => {
-    const vaultContract = getContract({
-        client,
-        address: vault.vault_address,
-        abi: BeefyVaultV7Abi,
-    });
-
-    const balancerPoolContract = getContract({
-        client,
-        address: vault.undelying_lp_address,
-        abi: BalancerPoolAbi,
-    });
+    const balancerPoolAddress = getAddress(vault.undelying_lp_address);
 
     const [vaultWantBalance, vaultTotalSupply, balancerVaultAddress, balancerPoolId, balancerTotalSupply] =
-        await Promise.all([
-            vaultContract.read.balance({ blockNumber }),
-            vaultContract.read.totalSupply({ blockNumber }),
-            balancerPoolContract.read.getVault({ blockNumber }),
-            balancerPoolContract.read.getPoolId({ blockNumber }),
-            balancerPoolContract.read.getActualSupply({ blockNumber }),
-        ]);
+        await client.multicall({
+            contracts: [
+                {
+                    address: vault.vault_address,
+                    abi: BeefyVaultV7Abi,
+                    functionName: 'balance',
+                },
+                {
+                    address: vault.vault_address,
+                    abi: BeefyVaultV7Abi,
+                    functionName: 'totalSupply',
+                },
+                {
+                    address: balancerPoolAddress,
+                    abi: BalancerPoolAbi,
+                    functionName: 'getVault',
+                },
+                {
+                    address: balancerPoolAddress,
+                    abi: BalancerPoolAbi,
+                    functionName: 'getPoolId',
+                },
+                {
+                    address: balancerPoolAddress,
+                    abi: BalancerPoolAbi,
+                    functionName: 'getActualSupply',
+                },
+            ],
+            allowFailure: false,
+            blockNumber,
+        });
 
     const balancerVaultContract = getContract({
         client,
@@ -61,30 +75,34 @@ export const getBalancerVaultBreakdown = async (
     blockNumber: bigint,
     vault: BeefyVault
 ): Promise<BeefyVaultBreakdown> => {
-    const vaultContract = getContract({
-        client,
-        address: vault.vault_address,
-        abi: BeefyVaultV7Abi,
-    });
+    const balancerPoolAddress = getAddress(vault.undelying_lp_address);
 
-    const strategyContract = getContract({
-        client,
-        address: vault.strategy_address,
-        abi: ClassiBalancerStrategyAbi,
+    const [vaultWantBalance, vaultTotalSupply, balancerVaultAddress, poolTotalSupply] = await client.multicall({
+        contracts: [
+            {
+                address: vault.vault_address,
+                abi: BeefyVaultV7Abi,
+                functionName: 'balance',
+            },
+            {
+                address: vault.vault_address,
+                abi: BeefyVaultV7Abi,
+                functionName: 'totalSupply',
+            },
+            {
+                address: vault.strategy_address,
+                abi: ClassiBalancerStrategyAbi,
+                functionName: 'balancerVault',
+            },
+            {
+                address: balancerPoolAddress,
+                abi: erc20Abi,
+                functionName: 'totalSupply',
+            },
+        ],
+        allowFailure: false,
+        blockNumber,
     });
-
-    const poolContract = getContract({
-        client,
-        address: vault.undelying_lp_address,
-        abi: erc20Abi,
-    });
-
-    const [vaultWantBalance, vaultTotalSupply, balancerVaultAddress, poolTotalSupply] = await Promise.all([
-        vaultContract.read.balance({ blockNumber }),
-        vaultContract.read.totalSupply({ blockNumber }),
-        strategyContract.read.balancerVault({ blockNumber }),
-        poolContract.read.totalSupply({ blockNumber }),
-    ]);
 
     const balancerVaultContract = getContract({
         client,

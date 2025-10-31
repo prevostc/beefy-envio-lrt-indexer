@@ -1,4 +1,4 @@
-import { getContract, type Hex } from 'viem';
+import { getAddress, type Hex } from 'viem';
 import type { BeefyViemClient } from '../../../viem';
 import { BeefyVaultV7Abi } from '../../abi/BeefyVaultV7Abi';
 import { GammaHypervisorAbi } from '../../abi/GammaHypervisorAbi';
@@ -10,25 +10,43 @@ export const getGammaVaultBreakdown = async (
     blockNumber: bigint,
     vault: BeefyVault
 ): Promise<BeefyVaultBreakdown> => {
-    const vaultContract = getContract({
-        client,
-        address: vault.vault_address,
-        abi: BeefyVaultV7Abi,
+    const hypervisorAddress = getAddress(vault.undelying_lp_address);
+    const [balance, vaultTotalSupply, totalSupply, totalAmounts, token0, token1] = await client.multicall({
+        contracts: [
+            {
+                address: vault.vault_address,
+                abi: BeefyVaultV7Abi,
+                functionName: 'balance',
+            },
+            {
+                address: vault.vault_address,
+                abi: BeefyVaultV7Abi,
+                functionName: 'totalSupply',
+            },
+            {
+                address: hypervisorAddress,
+                abi: GammaHypervisorAbi,
+                functionName: 'totalSupply',
+            },
+            {
+                address: hypervisorAddress,
+                abi: GammaHypervisorAbi,
+                functionName: 'getTotalAmounts',
+            },
+            {
+                address: hypervisorAddress,
+                abi: GammaHypervisorAbi,
+                functionName: 'token0',
+            },
+            {
+                address: hypervisorAddress,
+                abi: GammaHypervisorAbi,
+                functionName: 'token1',
+            },
+        ],
+        allowFailure: false,
+        blockNumber,
     });
-    const hypervisorContract = getContract({
-        client,
-        address: vault.undelying_lp_address,
-        abi: GammaHypervisorAbi,
-    });
-
-    const [balance, vaultTotalSupply, totalSupply, totalAmounts, token0, token1] = await Promise.all([
-        vaultContract.read.balance({ blockNumber }),
-        vaultContract.read.totalSupply({ blockNumber }),
-        hypervisorContract.read.totalSupply({ blockNumber }),
-        hypervisorContract.read.getTotalAmounts({ blockNumber }),
-        hypervisorContract.read.token0({ blockNumber }),
-        hypervisorContract.read.token1({ blockNumber }),
-    ]);
 
     return {
         vault,

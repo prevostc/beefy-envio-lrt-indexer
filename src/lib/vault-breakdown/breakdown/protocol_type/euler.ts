@@ -1,4 +1,3 @@
-import { getContract } from 'viem';
 import type { BeefyViemClient } from '../../../viem';
 import { BeefyVaultV7Abi } from '../../abi/BeefyVaultV7Abi';
 import type { BeefyVault } from '../../vault/getBeefyVaultConfig';
@@ -13,16 +12,22 @@ export const getEulerVaultBreakdown = async (
     // https://plasmascan.to/address/0x5aF45b3A8cB44B444dDf9cCEB90F5998EAc0FC97/contract/9745/readProxyContract
     // https://app.beefy.finance/vault/euler-plasma-k3capital-usdt0
 
-    const vaultContract = getContract({
-        client,
-        address: vault.vault_address,
-        abi: BeefyVaultV7Abi,
+    const [vaultWantBalance, vaultTotalSupply] = await client.multicall({
+        contracts: [
+            {
+                address: vault.vault_address,
+                abi: BeefyVaultV7Abi,
+                functionName: 'balance',
+            },
+            {
+                address: vault.vault_address,
+                abi: BeefyVaultV7Abi,
+                functionName: 'totalSupply',
+            },
+        ],
+        allowFailure: false,
+        blockNumber,
     });
-
-    const [vaultWantBalance, vaultTotalSupply] = await Promise.all([
-        vaultContract.read.balance({ blockNumber }),
-        vaultContract.read.totalSupply({ blockNumber }),
-    ]);
 
     return {
         vault,

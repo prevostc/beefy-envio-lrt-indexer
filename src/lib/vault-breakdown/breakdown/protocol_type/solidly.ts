@@ -1,4 +1,4 @@
-import { getContract, type Hex } from 'viem';
+import { getAddress, type Hex } from 'viem';
 import type { BeefyViemClient } from '../../../viem';
 import { BeefyVaultV7Abi } from '../../abi/BeefyVaultV7Abi';
 import { SolidlyPoolAbi } from '../../abi/SolidlyPoolAbi';
@@ -10,23 +10,33 @@ export const getSolidlyVaultBreakdown = async (
     blockNumber: bigint,
     vault: BeefyVault
 ): Promise<BeefyVaultBreakdown> => {
-    const vaultContract = getContract({
-        client,
-        address: vault.vault_address,
-        abi: BeefyVaultV7Abi,
+    const poolAddress = getAddress(vault.undelying_lp_address);
+    const [balance, vaultTotalSupply, totalSupply, poolMetadata] = await client.multicall({
+        contracts: [
+            {
+                address: vault.vault_address,
+                abi: BeefyVaultV7Abi,
+                functionName: 'balance',
+            },
+            {
+                address: vault.vault_address,
+                abi: BeefyVaultV7Abi,
+                functionName: 'totalSupply',
+            },
+            {
+                address: poolAddress,
+                abi: SolidlyPoolAbi,
+                functionName: 'totalSupply',
+            },
+            {
+                address: poolAddress,
+                abi: SolidlyPoolAbi,
+                functionName: 'metadata',
+            },
+        ],
+        allowFailure: false,
+        blockNumber,
     });
-    const poolContract = getContract({
-        client,
-        address: vault.undelying_lp_address,
-        abi: SolidlyPoolAbi,
-    });
-
-    const [balance, vaultTotalSupply, totalSupply, poolMetadata] = await Promise.all([
-        vaultContract.read.balance({ blockNumber }),
-        vaultContract.read.totalSupply({ blockNumber }),
-        poolContract.read.totalSupply({ blockNumber }),
-        poolContract.read.metadata({ blockNumber }),
-    ]);
 
     const t0 = poolMetadata[5];
     const t1 = poolMetadata[6];
