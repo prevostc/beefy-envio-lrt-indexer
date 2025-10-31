@@ -31,8 +31,6 @@ R.pipe(
                 blockNumber,
             });
 
-            if (context.isPreload) return;
-
             // Round timestamp to nearest 15-minute interval
             const roundedTimestamp = roundToClockPeriod(blockTimestamp);
 
