@@ -172,8 +172,8 @@ const protocol_map: Record<ApiPlatformId, BeefyProtocolType> = {
     nile: 'solidly',
     velodrome: 'solidly',
     swapx: 'ichi',
-    beethovenx: 'balancer_aura',
-    silo: 'balancer',
+    beethovenx: 'balancer',
+    silo: 'aave',
     euler: 'euler',
 };
 

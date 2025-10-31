@@ -1,7 +1,7 @@
 import type { BeefyViemClient } from '../../viem';
 import type { BeefyProtocolType, BeefyVault } from '../vault/getBeefyVaultConfig';
 import { getAaveVaultBreakdown } from './protocol_type/aave';
-import { getBalancerAuraVaultBreakdown } from './protocol_type/balancer';
+import { getBalancerAuraVaultBreakdown, getBalancerVaultBreakdown } from './protocol_type/balancer';
 import { getBeefyClmManagerBreakdown, getBeefyClmVaultBreakdown } from './protocol_type/beefy_clm';
 import { getCurveVaultBreakdown } from './protocol_type/curve';
 import { getEulerVaultBreakdown } from './protocol_type/euler';
@@ -20,7 +20,7 @@ type BreakdownMethod = (
 const breakdownMethods: Record<BeefyProtocolType, BreakdownMethod> = {
     aave: getAaveVaultBreakdown,
     balancer_aura: getBalancerAuraVaultBreakdown,
-    balancer: getBalancerAuraVaultBreakdown,
+    balancer: getBalancerVaultBreakdown,
     beefy_clm_vault: getBeefyClmVaultBreakdown,
     beefy_clm: getBeefyClmManagerBreakdown,
     curve: getCurveVaultBreakdown,
