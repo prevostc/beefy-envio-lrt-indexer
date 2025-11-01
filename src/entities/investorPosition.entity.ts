@@ -34,6 +34,10 @@ export const getOrCreateInvestorPosition = async ({
         directSharesBalance: new BigDecimal(0),
         rewardPoolSharesBalance: new BigDecimal(0),
         totalSharesBalance: new BigDecimal(0),
+        lastBalanceBreakdownBalances: [],
+        lastBalanceBreakdownTimeWeightedBalances: [],
+        lastBalanceBreakdownTimestamp: BigInt(0),
+        lastBalanceBreakdownBlock: BigInt(0),
     });
 };
 

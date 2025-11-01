@@ -17,6 +17,54 @@ import type { ChainId } from './chain';
 import { interpretAsDecimal } from './decimal';
 
 /**
+ * Calculate time-weighted balances based on investor position's last breakdown data and new balances
+ */
+const calculateTimeWeightedBalances = ({
+    investorPosition,
+    newBalances,
+    currentTimestamp,
+}: {
+    investorPosition: InvestorPosition_t;
+    newBalances: BigDecimal[];
+    currentTimestamp: bigint;
+}): { timeWeightedBalances: BigDecimal[]; finalBalances: BigDecimal[] } => {
+    const hasPreviousBreakdown =
+        investorPosition.lastBalanceBreakdownBalances.length > 0 &&
+        investorPosition.lastBalanceBreakdownTimestamp > BigInt(0);
+
+    if (!hasPreviousBreakdown) {
+        return {
+            timeWeightedBalances: R.map(newBalances, () => new BigDecimal(0)),
+            finalBalances: newBalances,
+        };
+    }
+
+    const oldBalances = investorPosition.lastBalanceBreakdownBalances;
+    const oldTimeWeightedBalances = investorPosition.lastBalanceBreakdownTimeWeightedBalances;
+
+    // Arrays should match in length if breakdown tokens haven't changed
+    // If they don't match, reset time-weighted balances (tokens changed in vault)
+    if (oldBalances.length !== newBalances.length) {
+        return {
+            timeWeightedBalances: R.map(newBalances, () => new BigDecimal(0)),
+            finalBalances: newBalances,
+        };
+    }
+
+    const timeElapsed = currentTimestamp - investorPosition.lastBalanceBreakdownTimestamp;
+    const timeElapsedDecimal = new BigDecimal(timeElapsed.toString());
+    const timeWeightedBalances = R.map(oldTimeWeightedBalances, (twb, i) => {
+        const oldBalance = oldBalances[i];
+        return twb.plus(oldBalance.multipliedBy(timeElapsedDecimal));
+    });
+
+    return {
+        timeWeightedBalances,
+        finalBalances: newBalances,
+    };
+};
+
+/**
  * Updates investor position balance and calculates breakdown
  * @param directSharesDiff - Change in direct shares balance (can be negative)
  * @param indirectSharesDiff - Change in reward pool shares balance (can be negative)
@@ -148,14 +196,35 @@ export const updateInvestorPositionAndBreakdown = async ({
             blockTimestamp,
             balances: vaultBreakdownBalances,
         }),
-        upsertInvestorPositionBalanceBreakdown({
-            context,
-            chainId,
-            investorPosition: updatedPosition,
-            balances: breakdownBalances,
-            blockTimestamp,
-            blockNumber,
-        }),
+        (async () => {
+            const { timeWeightedBalances, finalBalances } = calculateTimeWeightedBalances({
+                investorPosition: updatedPosition,
+                newBalances: breakdownBalances,
+                currentTimestamp: blockTimestamp,
+            });
+
+            const breakdown = await upsertInvestorPositionBalanceBreakdown({
+                context,
+                chainId,
+                investorPosition: updatedPosition,
+                balances: finalBalances,
+                timeWeightedBalances,
+                blockTimestamp,
+                blockNumber,
+            });
+
+            // Update investor position with the new breakdown data
+            const updatedPositionWithBreakdown: InvestorPosition_t = {
+                ...updatedPosition,
+                lastBalanceBreakdownBalances: finalBalances,
+                lastBalanceBreakdownTimeWeightedBalances: timeWeightedBalances,
+                lastBalanceBreakdownTimestamp: blockTimestamp,
+                lastBalanceBreakdownBlock: blockNumber,
+            };
+            await updateInvestorPosition({ context, investorPosition: updatedPositionWithBreakdown });
+
+            return breakdown;
+        })(),
     ]);
 };
 
@@ -262,7 +331,7 @@ export const updateVaultAndInvestorBreakdowns = async ({
     const breakdownPromises = R.pipe(
         investorPositions,
         R.filter((investorPosition) => investorPosition.totalSharesBalance.gt(new BigDecimal(0))),
-        R.map((investorPosition) => {
+        R.map(async (investorPosition) => {
             // Calculate user's share percentage
             const userSharePercentage = investorPosition.totalSharesBalance.dividedBy(vaultTotalSupply);
 
@@ -271,15 +340,34 @@ export const updateVaultAndInvestorBreakdowns = async ({
                 vaultBalance.multipliedBy(userSharePercentage)
             );
 
-            // Create or update investor position balance breakdown
-            return upsertInvestorPositionBalanceBreakdown({
+            // Calculate time-weighted balances
+            const { timeWeightedBalances, finalBalances } = calculateTimeWeightedBalances({
+                investorPosition,
+                newBalances: breakdownBalances,
+                currentTimestamp: blockTimestamp,
+            });
+
+            const breakdown = await upsertInvestorPositionBalanceBreakdown({
                 context,
                 chainId,
                 investorPosition,
-                balances: breakdownBalances,
+                balances: finalBalances,
+                timeWeightedBalances,
                 blockTimestamp,
                 blockNumber,
             });
+
+            // Update investor position with the new breakdown data
+            const updatedPositionWithBreakdown: InvestorPosition_t = {
+                ...investorPosition,
+                lastBalanceBreakdownBalances: finalBalances,
+                lastBalanceBreakdownTimeWeightedBalances: timeWeightedBalances,
+                lastBalanceBreakdownTimestamp: blockTimestamp,
+                lastBalanceBreakdownBlock: blockNumber,
+            };
+            await updateInvestorPosition({ context, investorPosition: updatedPositionWithBreakdown });
+
+            return breakdown;
         })
     );
 

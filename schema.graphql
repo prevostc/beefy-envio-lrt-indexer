@@ -263,6 +263,29 @@ type InvestorPosition {
 
   "Breakdown of the investor position balance"
   balanceBreakdown: [InvestorPositionBalanceBreakdown!]! @derivedFrom(field: "investorPosition")
+
+  """
+  Last balance breakdown balances. Order is determined by the vault's breakdownTokensOrder.
+  Used to calculate time-weighted balances without querying all breakdowns.
+  """
+  lastBalanceBreakdownBalances: [BigDecimal!]! @config(precision: 100, scale: 24)
+
+  """
+  Last balance breakdown time-weighted balances. Order is determined by the vault's breakdownTokensOrder.
+  Used to calculate time-weighted balances without querying all breakdowns.
+  """
+  lastBalanceBreakdownTimeWeightedBalances: [BigDecimal!]!
+
+  """
+  Last time the balance breakdown was updated on the investor position.
+  Used to calculate time elapsed for time-weighted balance accumulation.
+  """
+  lastBalanceBreakdownTimestamp: BigInt!
+
+  """
+  Last block the balance breakdown was updated on the investor position.
+  """
+  lastBalanceBreakdownBlock: BigInt!
 }
 
 type InvestorPositionBalanceBreakdown {
@@ -283,13 +306,13 @@ type InvestorPositionBalanceBreakdown {
   This is the balance times the amount of time the investor has held the token, in seconds.
   ex: if the investor has held 100 tokens for 20 seconds, the time weighted balance is 2000
   """
-  timeWeightedBalance: BigDecimal!
+  timeWeightedBalances: [BigDecimal!]!
 
   """
   Last time the balance breakdown was updated.
 
   This can be used to approximate the time weighted balance at any block using:
-  timeWeightedBalance + balance * (block.timestamp - lastUpdateTimestamp)
+  timeWeightedBalances[i] + balances[i] * (block.timestamp - lastUpdateTimestamp)
   """
   lastUpdateTimestamp: BigInt!
 

@@ -1,4 +1,4 @@
-import { BigDecimal, type handlerContext as HandlerContext } from 'generated';
+import type { BigDecimal, handlerContext as HandlerContext } from 'generated';
 import type {
     BeefyVault_t,
     InvestorPosition_t,
@@ -59,6 +59,7 @@ export const upsertInvestorPositionBalanceBreakdown = async ({
     chainId,
     investorPosition,
     balances,
+    timeWeightedBalances,
     blockTimestamp,
     blockNumber,
 }: {
@@ -66,27 +67,21 @@ export const upsertInvestorPositionBalanceBreakdown = async ({
     chainId: ChainId;
     investorPosition: InvestorPosition_t;
     balances: BigDecimal[];
+    timeWeightedBalances: BigDecimal[];
     blockTimestamp: bigint;
     blockNumber: bigint;
 }): Promise<InvestorPositionBalanceBreakdown_t> => {
     const id = getInvestorPositionBalanceBreakdownId({ investorPosition, blockNumber });
-    const existing = await context.InvestorPositionBalanceBreakdown.get(id);
-    const entity: InvestorPositionBalanceBreakdown_t = existing
-        ? {
-              ...existing,
-              balances,
-              lastUpdateTimestamp: blockTimestamp,
-              lastUpdateBlock: blockNumber,
-          }
-        : ({
-              id,
-              chainId,
-              investorPosition_id: investorPosition.id,
-              balances,
-              timeWeightedBalance: new BigDecimal(0),
-              lastUpdateTimestamp: blockTimestamp,
-              lastUpdateBlock: blockNumber,
-          } as unknown as InvestorPositionBalanceBreakdown_t);
+
+    const entity: InvestorPositionBalanceBreakdown_t = {
+        id,
+        chainId,
+        investorPosition_id: investorPosition.id,
+        balances,
+        timeWeightedBalances,
+        lastUpdateTimestamp: blockTimestamp,
+        lastUpdateBlock: blockNumber,
+    } as unknown as InvestorPositionBalanceBreakdown_t;
 
     context.InvestorPositionBalanceBreakdown.set(entity);
     return entity;
