@@ -25,7 +25,7 @@ export const allChainIds = [
     // 169, // manta
     // 5000, // mantle
     // 1088, // metis
-    34443, // mode
+    // 34443, // mode
     // 1284, // moonbeam
     // 1285, // moonriver
     // 1666600000, // one

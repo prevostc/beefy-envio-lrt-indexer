@@ -129,18 +129,6 @@ networks:
         address:
           - 0x818CFe11Df8fD790c6CAC127A247bb4439089efa
 
-  - id: 34443 # mode
-    start_block: 8148508
-    rpc: ${RPC_URL_34443}
-    contracts:
-      - name: ClassicVault
-        address:
-          - 0x6Dd2abBBbbf494dd2454aEd67880B9533E2b3DA1 # 8148508
-      - name: ClmManager
-        address: []
-      - name: RewardPool
-        address: []
-
   - id: 10 # optimism
     start_block: 123079790
     rpc: ${RPC_URL_10}
