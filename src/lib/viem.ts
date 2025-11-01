@@ -1,5 +1,5 @@
 import type { Logger } from 'envio';
-import { createPublicClient, defineChain, http, type Chain as ViemChain } from 'viem';
+import { createPublicClient, defineChain, type Chain as ViemChain, http as viemHttp } from 'viem';
 import {
     arbitrum,
     aurora,
@@ -154,6 +154,17 @@ const chainMap: MapByChainId<ViemChain> = {
 export const getViemClient = (chainId: ChainId, logger: Logger) => {
     const rpcUrl = config.RPC_URL[chainId];
 
+    const opts: RequestInit = {
+        keepalive: true,
+    };
+
+    const fetchFn: typeof fetch = (input, init) => {
+        return fetch(input, {
+            ...init,
+            ...opts,
+        });
+    };
+
     return createPublicClient({
         chain: chainMap[chainId],
         // Enable multicall batching for efficiency
@@ -169,7 +180,9 @@ export const getViemClient = (chainId: ChainId, logger: Logger) => {
             multicall: false,
         },
         // Thanks to automatic Effect API batching, we can also enable batching for Viem transport level
-        transport: http(rpcUrl, {
+        transport: viemHttp(rpcUrl, {
+            fetchFn,
+
             onFetchRequest: async (request) => {
                 const requestData = await request.clone().json();
                 logger.debug('rpc.http: request', { request: requestData });
