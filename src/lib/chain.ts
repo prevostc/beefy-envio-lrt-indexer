@@ -3,11 +3,11 @@ import * as R from 'remeda';
 
 export const allChainIds = [
     // 1313161554, // aurora
-    42161, // arbitrum
+    // 42161, // arbitrum
     // 43114, // avax
-    8453, // base
+    // 8453, // base
     // 80094, // berachain
-    56, // bsc
+    // 56, // bsc
     // 7700, // canto
     // 42220, // celo
     // 25, // cronos
@@ -18,9 +18,9 @@ export const allChainIds = [
     // 100, // gnosis
     // 128, // heco
     // 122, // fuse
-    999, // hyperevm
+    // 999, // hyperevm
     // 2222, // kava
-    59144, // linea
+    // 59144, // linea
     // 1135, // lisk
     // 169, // manta
     // 5000, // mantle
@@ -29,7 +29,7 @@ export const allChainIds = [
     // 1284, // moonbeam
     // 1285, // moonriver
     // 1666600000, // one
-    10, // optimism
+    // 10, // optimism
     // 9745, // plasma
     // 137, // polygon
     // 111188, // real
@@ -37,7 +37,7 @@ export const allChainIds = [
     // 5464, // saga
     // 534352, // scroll
     // 1329, // sei
-    146, // sonic
+    // 146, // sonic
     // 130, // unichain
     // 1101, // zkevm
     // 324, // zksync
