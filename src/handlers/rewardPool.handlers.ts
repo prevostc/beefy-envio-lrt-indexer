@@ -96,6 +96,9 @@ const initializeRewardPool = async ({
         vaultOrRewardPoolAddress: rewardPoolAddress,
     });
 
+    // Early exit in preload if read depends on effect data (vaultConfig.vault_address used in read)
+    if (context.isPreload) return null;
+
     const vault = await getBeefyVault(context, chainId, vaultConfig.vault_address);
     if (!vault) {
         throw new Error('RewardPool vault not found');

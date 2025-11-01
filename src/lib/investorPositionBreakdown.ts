@@ -69,6 +69,9 @@ export const updateInvestorPositionAndBreakdown = async ({
         vaultOrRewardPoolAddress: vault.address,
     });
 
+    // Early exit in preload if effect depends on read data (vaultConfig used in effect)
+    if (context.isPreload) return;
+
     // Fetch vault balance breakdown
     const breakdownData = await context.effect(getVaultTvlBreakdownEffect, {
         chainId,
@@ -179,6 +182,9 @@ export const updateVaultAndInvestorBreakdowns = async ({
         chainId,
         vaultOrRewardPoolAddress: vault.address,
     });
+
+    // Early exit in preload if effect depends on read data (vaultConfig used in effect)
+    if (context.isPreload) return;
 
     // Fetch vault balance breakdown
     const breakdownData = await context.effect(getVaultTvlBreakdownEffect, {
