@@ -233,7 +233,7 @@ type VaultBalanceBreakdown {
   blockTimestamp: BigInt! @index
 
   "Balances of the breakdown tokens at the time of the breakdown. Order is determined by the vault's breakdownTokensOrder"
-  balances: [BigDecimal!]! @config(precision: 100, scale: 24)
+  balances: [BigDecimal!]!
 }
 
 ###################################
@@ -268,7 +268,7 @@ type InvestorPosition {
   Last balance breakdown balances. Order is determined by the vault's breakdownTokensOrder.
   Used to calculate time-weighted balances without querying all breakdowns.
   """
-  lastBalanceBreakdownBalances: [BigDecimal!]! @config(precision: 100, scale: 24)
+  lastBalanceBreakdownBalances: [BigDecimal!]!
 
   """
   Last balance breakdown time-weighted balances. Order is determined by the vault's breakdownTokensOrder.
@@ -299,7 +299,7 @@ type InvestorPositionBalanceBreakdown {
   investorPosition: InvestorPosition! @index
 
   "Balances of the breakdown tokens at the time of the breakdown. Order is determined by the vault's breakdownTokensOrder"
-  balances: [BigDecimal!]! @config(precision: 100, scale: 24)
+  balances: [BigDecimal!]!
 
   """
   Time weighted balance UP UNTIL the last time we updated the time weighted balance.
