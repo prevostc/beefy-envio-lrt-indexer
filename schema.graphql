@@ -317,5 +317,5 @@ type InvestorPositionBalanceBreakdown {
   lastUpdateTimestamp: BigInt!
 
   "last time the balance was updated"
-  lastUpdateBlock: BigInt!
+  lastUpdateBlock: BigInt! @index # indexed to retrieve the last breakdown for a given investor position
 }
