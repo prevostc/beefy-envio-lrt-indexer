@@ -23,7 +23,7 @@ export const config = S.parseOrThrow(
         MINT_ADDRESS: '0x0000000000000000000000000000000000000000',
         RPC_URL: R.pipe(
             allChainIds,
-            R.map((chainId) => [chainId, process.env[`RPC_URL_${chainId}`] ?? null] as const),
+            R.map((chainId) => [chainId, process.env[`ENVIO_RPC_URL_${chainId}`] ?? null] as const),
             R.fromEntries()
         ),
     },

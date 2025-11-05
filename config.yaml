@@ -31,7 +31,7 @@ contracts:
 networks:
   # - id: 42161 # arbitrum
   #   start_block: 179921508
-  #   rpc: ${RPC_URL_42161}
+  #   rpc: ${ENVIO_RPC_URL_42161}
   #   contracts:
   #     - name: ClassicVault
   #       address:
@@ -47,7 +47,7 @@ networks:
 
   # - id: 8453 # base
   #   start_block: 13929020
-  #   rpc: ${RPC_URL_8453}
+  #   rpc: ${ENVIO_RPC_URL_8453}
   #   contracts:
   #     - name: ClassicVault
   #       address:
@@ -60,7 +60,7 @@ networks:
 
   # - id: 56 # bsc
   #   start_block: 38435936
-  #   rpc: ${RPC_URL_56}
+  #   rpc: ${ENVIO_RPC_URL_56}
   #   contracts:
   #     - name: ClassicVault
   #       address:
@@ -72,7 +72,7 @@ networks:
 
   - id: 1 # ethereum
     start_block: 15891216
-    rpc: ${RPC_URL_1}
+    rpc: ${ENVIO_RPC_URL_1}
     contracts:
       - name: ClassicVault
         address:
@@ -88,7 +88,7 @@ networks:
   #   # force rpc usage over hypersync because hyperevm used an existing chainid
   #   # that was already used by another chain (wanchain)
   #   rpc_config:
-  #     url: ${RPC_URL_999}
+  #     url: ${ENVIO_RPC_URL_999}
   #     initial_block_interval: 250 # Initial number of blocks to fetch in each request
   #     backoff_multiplicative: 0.999999 # Factor to scale back block request size after errors
   #     acceleration_additive: 0 # How many more blocks to request when successful
@@ -117,7 +117,7 @@ networks:
 
   # - id: 59144 # linea
   #   start_block: 4231522
-  #   rpc: ${RPC_URL_59144}
+  #   rpc: ${ENVIO_RPC_URL_59144}
   #   contracts:
   #     - name: ClassicVault
   #       address:
@@ -131,7 +131,7 @@ networks:
 
   # - id: 10 # optimism
   #   start_block: 123079790
-  #   rpc: ${RPC_URL_10}
+  #   rpc: ${ENVIO_RPC_URL_10}
   #   contracts:
   #     - name: ClassicVault
   #       address:
@@ -143,7 +143,7 @@ networks:
 
   # - id: 146 # sonic
   #   start_block: 4412635
-  #   rpc: ${RPC_URL_146}
+  #   rpc: ${ENVIO_RPC_URL_146}
   #   contracts:
   #     - name: ClassicVault
   #       address:
