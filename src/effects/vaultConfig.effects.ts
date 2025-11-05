@@ -1,10 +1,10 @@
-import { type EffectContext, experimental_createEffect, S } from 'envio';
+import { createEffect, type EffectContext, S } from 'envio';
 import type { HandlerContext } from 'generated/src/Types';
 import type { Hex } from 'viem';
 import { type ChainId, chainIdSchema } from '../lib/chain';
 import { type BeefyVault, getBeefyVaultConfigs } from '../lib/vault-breakdown/vault/getBeefyVaultConfig';
 
-const getBeefyVaultConfigsEffect = experimental_createEffect(
+const getBeefyVaultConfigsEffect = createEffect(
     {
         name: 'getBeefyVaultConfigs',
         input: {
@@ -12,14 +12,20 @@ const getBeefyVaultConfigsEffect = experimental_createEffect(
             cacheBuster: S.bigint,
         },
         output: S.string,
+        rateLimit: false,
         cache: true,
     },
-    async ({ input }) => {
-        const { chainId } = input;
-        const configs = await getBeefyVaultConfigs(chainId);
+    async ({ input, context }) => {
+        try {
+            const { chainId } = input;
+            const configs = await getBeefyVaultConfigs(chainId);
 
-        // stringify to avoid defining a proper S schema for the BeefyVault type
-        return JSON.stringify(configs);
+            // stringify to avoid defining a proper S schema for the BeefyVault type
+            return JSON.stringify(configs);
+        } catch (error) {
+            context.cache = false;
+            throw error;
+        }
     }
 );
 

@@ -1,11 +1,11 @@
-import { experimental_createEffect, S } from 'envio';
+import { createEffect, S } from 'envio';
 import { chainIdSchema } from '../lib/chain';
 import { getViemClient } from '../lib/viem';
 
 /**
  * Effect to get block timestamp from RPC
  */
-export const getBlockTimestamp = experimental_createEffect(
+export const getBlockTimestamp = createEffect(
     {
         name: 'getBlockTimestamp',
         input: {
@@ -13,11 +13,17 @@ export const getBlockTimestamp = experimental_createEffect(
             blockNumber: S.bigint,
         },
         output: S.bigint,
+        rateLimit: false,
         cache: true,
     },
     async ({ input, context }) => {
-        const client = getViemClient(input.chainId, context.log);
-        const block = await client.getBlock({ blockNumber: input.blockNumber });
-        return BigInt(block.timestamp);
+        try {
+            const client = getViemClient(input.chainId, context.log);
+            const block = await client.getBlock({ blockNumber: input.blockNumber });
+            return BigInt(block.timestamp);
+        } catch (error) {
+            context.cache = false;
+            throw error;
+        }
     }
 );

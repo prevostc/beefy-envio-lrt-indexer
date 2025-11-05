@@ -1,4 +1,4 @@
-import { experimental_createEffect, S } from 'envio';
+import { createEffect, S } from 'envio';
 import type { Hex } from 'viem';
 import { chainIdSchema } from '../lib/chain';
 import { getVaultBreakdowns } from '../lib/vault-breakdown/breakdown/getVaultBreakdown';
@@ -6,7 +6,7 @@ import type { BeefyProtocolType } from '../lib/vault-breakdown/vault/getBeefyVau
 import { getViemClient } from '../lib/viem';
 import { getBeefyVaultConfigForAddress } from './vaultConfig.effects';
 
-export const getVaultTvlBreakdownEffect = experimental_createEffect(
+export const getVaultTvlBreakdownEffect = createEffect(
     {
         name: 'getVaultTvlBreakdown',
         input: {
@@ -26,23 +26,29 @@ export const getVaultTvlBreakdownEffect = experimental_createEffect(
                 })
             ),
         }),
+        rateLimit: false,
         cache: true,
     },
     async ({ input, context }) => {
-        const { chainId, blockNumber, vault } = input;
-        const client = getViemClient(chainId, context.log);
-        const vaultConfig = await getBeefyVaultConfigForAddress({
-            context,
-            chainId,
-            vaultOrRewardPoolAddress: vault.address,
-        });
-        const breakdown = await getVaultBreakdowns(client, blockNumber, vaultConfig);
-        return {
-            vaultTotalSupply: breakdown.vaultTotalSupply,
-            balances: breakdown.balances.map((balance) => ({
-                tokenAddress: balance.tokenAddress,
-                tokenBalance: BigInt(balance.vaultBalance),
-            })),
-        };
+        try {
+            const { chainId, blockNumber, vault } = input;
+            const client = getViemClient(chainId, context.log);
+            const vaultConfig = await getBeefyVaultConfigForAddress({
+                context,
+                chainId,
+                vaultOrRewardPoolAddress: vault.address,
+            });
+            const breakdown = await getVaultBreakdowns(client, blockNumber, vaultConfig);
+            return {
+                vaultTotalSupply: breakdown.vaultTotalSupply,
+                balances: breakdown.balances.map((balance) => ({
+                    tokenAddress: balance.tokenAddress,
+                    tokenBalance: BigInt(balance.vaultBalance),
+                })),
+            };
+        } catch (error) {
+            context.cache = false;
+            throw error;
+        }
     }
 );

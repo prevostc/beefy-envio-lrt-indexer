@@ -1,10 +1,10 @@
-import { experimental_createEffect } from 'envio';
+import { createEffect } from 'envio';
 import { chainIdSchema } from '../lib/chain';
 import { ADDRESS_ZERO } from '../lib/decimal';
 import { hexSchema } from '../lib/hex';
 import { getViemClient } from '../lib/viem';
 
-export const getRewardPoolTokens = experimental_createEffect(
+export const getRewardPoolTokens = createEffect(
     {
         name: 'getRewardPoolTokens',
         input: {
@@ -15,54 +15,64 @@ export const getRewardPoolTokens = experimental_createEffect(
             shareTokenAddress: hexSchema,
             underlyingTokenAddress: hexSchema,
         },
+        rateLimit: false,
         cache: true,
     },
     async ({ input, context }) => {
-        const { rewardPoolAddress, chainId } = input;
-        const client = getViemClient(chainId, context.log);
+        try {
+            const { rewardPoolAddress, chainId } = input;
+            const client = getViemClient(chainId, context.log);
 
-        context.log.debug('Fetching RewardPool tokens', { rewardPoolAddress, chainId });
+            context.log.debug('Fetching RewardPool tokens', { rewardPoolAddress, chainId });
 
-        const [underlyingTokenResult] = await client.multicall({
-            allowFailure: true,
-            contracts: [
-                {
-                    address: rewardPoolAddress as `0x${string}`,
-                    abi: [
-                        {
-                            inputs: [],
-                            name: 'stakedToken',
-                            outputs: [{ name: '', type: 'address' }],
-                            stateMutability: 'view',
-                            type: 'function',
-                        },
-                    ],
-                    functionName: 'stakedToken',
-                    args: [],
-                },
-            ],
-        });
+            const [underlyingTokenResult] = await client.multicall({
+                allowFailure: true,
+                contracts: [
+                    {
+                        address: rewardPoolAddress as `0x${string}`,
+                        abi: [
+                            {
+                                inputs: [],
+                                name: 'stakedToken',
+                                outputs: [{ name: '', type: 'address' }],
+                                stateMutability: 'view',
+                                type: 'function',
+                            },
+                        ],
+                        functionName: 'stakedToken',
+                        args: [],
+                    },
+                ],
+            });
 
-        // The reward pool contract itself is the share token (virtual token)
-        const shareTokenAddress = rewardPoolAddress;
+            // The reward pool contract itself is the share token (virtual token)
+            const shareTokenAddress = rewardPoolAddress;
 
-        if (underlyingTokenResult.status === 'failure') {
-            context.log.error('RewardPool stakedToken call failed', { rewardPoolAddress, chainId });
-            throw new Error('RewardPool stakedToken call failed');
+            if (underlyingTokenResult.status === 'failure') {
+                context.log.error('RewardPool stakedToken call failed', { rewardPoolAddress, chainId });
+                throw new Error('RewardPool stakedToken call failed');
+            }
+
+            const underlyingTokenAddress = underlyingTokenResult.result;
+
+            context.log.info('RewardPool data fetched', {
+                rewardPoolAddress,
+                shareTokenAddress,
+                underlyingTokenAddress,
+            });
+
+            if (underlyingTokenAddress === ADDRESS_ZERO) {
+                throw new Error('RewardPool underlying token is zero address');
+            }
+
+            return {
+                shareTokenAddress,
+                underlyingTokenAddress,
+                blacklistStatus: 'ok' as const,
+            };
+        } catch (error) {
+            context.cache = false;
+            throw error;
         }
-
-        const underlyingTokenAddress = underlyingTokenResult.result;
-
-        context.log.info('RewardPool data fetched', { rewardPoolAddress, shareTokenAddress, underlyingTokenAddress });
-
-        if (underlyingTokenAddress === ADDRESS_ZERO) {
-            throw new Error('RewardPool underlying token is zero address');
-        }
-
-        return {
-            shareTokenAddress,
-            underlyingTokenAddress,
-            blacklistStatus: 'ok' as const,
-        };
     }
 );

@@ -1,10 +1,10 @@
-import { experimental_createEffect, S } from 'envio';
+import { createEffect, S } from 'envio';
 import { erc20Abi } from 'viem';
 import { chainIdSchema } from '../lib/chain';
 import { hexSchema } from '../lib/hex';
 import { getViemClient } from '../lib/viem';
 
-export const getTokenMetadataEffect = experimental_createEffect(
+export const getTokenMetadataEffect = createEffect(
     {
         name: 'getTokenMetadata',
         input: {
@@ -16,48 +16,54 @@ export const getTokenMetadataEffect = experimental_createEffect(
             symbol: S.string,
             decimals: S.number,
         }),
+        rateLimit: false,
         // Enable caching to avoid duplicated calls
         cache: true,
     },
     async ({ input, context }) => {
-        const { tokenAddress, chainId } = input;
+        try {
+            const { tokenAddress, chainId } = input;
 
-        const client = getViemClient(chainId, context.log);
+            const client = getViemClient(chainId, context.log);
 
-        context.log.debug('Fetching token metadata', { tokenAddress, chainId });
+            context.log.debug('Fetching token metadata', { tokenAddress, chainId });
 
-        // Try standard Erc20 interface first (most common)
-        const erc20 = {
-            address: tokenAddress as `0x${string}`,
-            abi: erc20Abi,
-        } as const;
-        const [decimals, name, symbol] = await client.multicall({
-            allowFailure: false,
-            contracts: [
-                {
-                    ...erc20,
-                    functionName: 'decimals',
-                    args: [],
-                },
-                {
-                    ...erc20,
-                    functionName: 'name',
-                    args: [],
-                },
-                {
-                    ...erc20,
-                    functionName: 'symbol',
-                    args: [],
-                },
-            ],
-        });
+            // Try standard Erc20 interface first (most common)
+            const erc20 = {
+                address: tokenAddress as `0x${string}`,
+                abi: erc20Abi,
+            } as const;
+            const [decimals, name, symbol] = await client.multicall({
+                allowFailure: false,
+                contracts: [
+                    {
+                        ...erc20,
+                        functionName: 'decimals',
+                        args: [],
+                    },
+                    {
+                        ...erc20,
+                        functionName: 'name',
+                        args: [],
+                    },
+                    {
+                        ...erc20,
+                        functionName: 'symbol',
+                        args: [],
+                    },
+                ],
+            });
 
-        context.log.info('Got token details', { tokenAddress, name, symbol, decimals });
+            context.log.info('Got token details', { tokenAddress, name, symbol, decimals });
 
-        return {
-            name,
-            symbol,
-            decimals,
-        };
+            return {
+                name,
+                symbol,
+                decimals,
+            };
+        } catch (error) {
+            context.cache = false;
+            throw error;
+        }
     }
 );
